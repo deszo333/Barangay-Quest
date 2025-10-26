@@ -1,0 +1,165 @@
+.achievements-page {
+  padding: 2rem 0;
+}
+
+.achievements-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--card); /* Add a separator */
+  padding-bottom: 1.5rem;
+}
+
+.achievements-header h1 {
+    margin: 0;
+}
+
+/* Tabs */
+.achievements-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background-color: var(--bg-2); /* Darker background for tab container */
+  padding: 0.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--card);
+}
+
+.achievements-tab-button {
+  flex: 1; /* Make buttons equal width */
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px; /* Rounded corners for buttons */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.achievements-tab-button.active {
+  background-color: var(--accent); /* Accent color for active */
+  color: #052130; /* Dark text on accent */
+  font-weight: 700;
+}
+.achievements-tab-button:not(.active):hover {
+    background-color: var(--card);
+    color: var(--white);
+}
+
+
+/* Grid Layout */
+.achievements-grid {
+  display: grid;
+  /* Adjust columns based on design - seems like 2 main achievement columns + sidebar */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* Achievement Card */
+.achievement-card {
+  background: var(--bg-2);
+  border: 1px solid var(--card);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  display: grid; /* Use grid for layout inside card */
+  grid-template-columns: auto 1fr; /* Icon | Text Content */
+  gap: 1.25rem;
+  align-items: center;
+  opacity: 0.6; /* Default: locked appearance */
+  transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative; /* For potential future elements like tooltips */
+}
+
+.achievement-card.unlocked {
+  opacity: 1; /* Unlocked: full opacity */
+  border-left: 4px solid var(--accent); /* Highlight unlocked */
+}
+.achievement-card.unlocked:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.achievement-icon {
+  font-size: 2.5rem; /* Icon size */
+  width: 60px; /* Container size */
+  height: 60px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background-color: var(--card); /* Background for icon */
+  filter: grayscale(80%); /* Locked: grayscale icon */
+}
+.achievement-card.unlocked .achievement-icon {
+  filter: none; /* Unlocked: full color */
+  background-color: rgba(31, 182, 255, 0.1); /* Accent background */
+  color: var(--accent); /* Accent color for icon */
+}
+
+.achievement-details h3 {
+  margin: 0 0 0.3rem;
+  color: var(--white);
+  font-size: 1.15rem;
+}
+
+.achievement-details p {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Progress Bar */
+.progress-bar-container {
+  width: 100%;
+  background-color: var(--card);
+  border-radius: 99px;
+  height: 8px;
+  overflow: hidden; /* Ensure inner bar stays contained */
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: var(--accent);
+  border-radius: 99px;
+  transition: width 0.5s ease-in-out;
+}
+
+.progress-text {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.3rem;
+    font-weight: 500;
+}
+
+/* Sidebar Sections (Example) */
+.achievements-sidebar {
+    grid-column: span 1; /* Adjust based on grid layout if needed */
+    display: grid;
+    gap: 1.5rem;
+    align-content: start;
+}
+.sidebar-card {
+    background: var(--bg-2);
+    border: 1px solid var(--card);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+}
+.sidebar-card h3 {
+    margin: 0 0 1rem;
+    color: var(--white);
+    border-bottom: 1px solid var(--card);
+    padding-bottom: 0.75rem;
+}
+/* Add specific styles for progress circle etc. */
+
+/* Badge Display (Next to Names) */
+.user-badge {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.8em; /* Adjust size */
+    vertical-align: middle; /* Align with text */
+    cursor: help; /* Indicate it's hoverable/clickable */
+    /* Add specific styles per badge later */
+}

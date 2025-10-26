@@ -1,0 +1,159 @@
+.my-applications-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr; /* Sidebar and Main Content */
+  gap: 2rem;
+  padding: 2rem 0;
+}
+
+@media (max-width: 980px) {
+  .my-applications-layout {
+    grid-template-columns: 1fr; /* Stack on mobile */
+  }
+}
+
+/* === User Profile Sidebar === */
+.profile-sidebar {
+  background: var(--bg-2);
+  border: 1px solid var(--card);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  align-self: start;
+  position: sticky;
+  top: 100px;
+  text-align: center;
+}
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 1rem;
+  border: 3px solid var(--card);
+}
+.profile-sidebar h2 {
+  margin: 0 0 0.25rem;
+  color: var(--white);
+}
+.profile-sidebar p {
+  color: var(--muted);
+  margin: 0 0 1.5rem;
+}
+.profile-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  text-align: left;
+  border-top: 1px solid var(--card);
+  padding-top: 1.5rem;
+}
+.stat-item span { display: block; }
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--white);
+}
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* === Main Applications Panel === */
+.applications-panel h1 {
+  margin: 0 0 1.5rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--card);
+  margin-bottom: 1.5rem;
+}
+.tab-button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  border-bottom: 3px solid transparent;
+}
+.tab-button.active {
+  color: var(--white);
+  border-bottom-color: var(--accent);
+}
+
+.applications-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* === Application Item Card === */
+.application-item {
+  background: var(--bg-2);
+  border: 1px solid var(--card);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto; /* Logo, Details, Actions */
+  gap: 1.5rem;
+  align-items: center;
+}
+.app-logo {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--card);
+}
+.app-details h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  color: var(--white);
+}
+.app-details p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.app-status {
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+.app-status.pending { background: rgba(251, 191, 36, 0.1); color: #facc15; border: 1px solid rgba(251, 191, 36, 0.2); }
+.app-status.interview { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+.app-status.hired { background: rgba(74, 222, 128, 0.1); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2); }
+.app-status.rejected { background: rgba(248, 113, 113, 0.1); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.2); }
+
+.app-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+.app-actions .btn {
+  min-width: 100px;
+  text-align: center;
+}
+
+/* --- Add this to the bottom of MyApplications.css --- */
+
+.app-rating-section {
+  grid-column: 1 / -1; /* Span all columns */
+  border-top: 1px solid var(--card);
+  margin-top: 1rem;
+  padding-top: 1rem;
+  background: var(--card); /* Slightly different background */
+  margin: 1rem -1.5rem -1.5rem; /* Extend to card edges */
+  padding: 1rem 1.5rem 1.5rem;
+  border-radius: 0 0 var(--radius) var(--radius); /* Round bottom corners */
+}
+
+.app-rating-section h4 {
+  margin: 0 0 0.75rem;
+  color: var(--white);
+}

@@ -1,21 +1,44 @@
-import React from "react";
-import { useOutletContext, Link, useNavigate } from "react-router-dom";
-import "./Auth.css"; // Import the new CSS
-import "../pages/Home.css"; // We still need this for the button styles
+import React, { useState } from "react"; // Import useState
+import { Link, useNavigate } from "react-router-dom";
+
+// Firebase Imports
+import { auth } from "../firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+
+// CSS Imports
+import "./Auth.css";
+import "../pages/Home.css";
 
 export default function LoginPage() {
-  const { setUser } = useOutletContext();
   const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false); // Loading state for button
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setUser({ name: "Barangay Member" });
-    navigate("/"); 
+    setError(null);
+    setLoading(true); // Disable button
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email");
+    const password = formData.get("password");
+
+    try {
+      // 1. Sign in the user with Firebase Auth
+      await signInWithEmailAndPassword(auth, email, password);
+
+      // 2. Success! Navigate to home.
+      // The listener in App.jsx will do the rest.
+      navigate("/");
+
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+      setLoading(false); // Re-enable button
+    }
   };
 
   return (
-    // REMOVED the .auth-layout and .auth-image divs
-    // This container is now the root element
     <div className="auth-form-container">
       <Link to="/" className="auth-logo">
         <span className="brand-badge">B</span>
@@ -43,8 +66,15 @@ export default function LoginPage() {
           <Link to="/forgot-password" className="auth-link">Forgot password?</Link>
         </div>
 
-        <button type="submit" className="btn btn-accent btn-auth">
-          Sign In
+        {/* Show error message if one exists */}
+        {error && (
+          <p style={{ color: "#ff8a8a", margin: "-8px 0 0" }}>
+            {error.replace('Firebase: ', '')}
+          </p>
+        )}
+
+        <button type="submit" className="btn btn-accent btn-auth" disabled={loading}>
+          {loading ? "Signing In..." : "Sign In"}
         </button>
       </form>
 

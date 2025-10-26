@@ -1,0 +1,212 @@
+.find-quests-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr; /* Sidebar and Main Content */
+  gap: 2rem;
+  padding: 2rem 0;
+}
+
+@media (max-width: 980px) {
+  .find-quests-layout {
+    grid-template-columns: 1fr; /* Stack on mobile */
+  }
+}
+
+/* === Filter Sidebar === */
+.filter-sidebar {
+  display: grid;
+  gap: 1.5rem;
+  align-content: start;
+}
+
+.filter-group {
+  border-bottom: 1px solid var(--card);
+  padding-bottom: 1.5rem;
+}
+.filter-group h3 {
+  margin: 0 0 1rem;
+  color: var(--white);
+  font-size: 1.1rem;
+}
+.filter-group .map-placeholder {
+  height: 150px;
+  background: var(--bg-2);
+  border: 1px solid var(--card);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.filter-group .btn {
+  width: 100%;
+}
+
+/* === Results Panel === */
+.results-panel {
+  min-height: 80vh;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.results-header h2 {
+  margin: 0;
+  color: var(--white);
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 columns like the design */
+  gap: 1.5rem;
+}
+
+@media (max-width: 1100px) {
+  .results-grid {
+    grid-template-columns: 1fr; /* Stack to 1 column */
+  }
+}
+
+
+/* === Quest Card (in a separate component) === */
+.quest-card {
+  background: var(--bg-2);
+  border: 1px solid var(--card);
+  border-radius: var(--radius);
+  padding: 1rem;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+}
+.quest-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px var(--accent), var(--shadow);
+  border-color: var(--accent);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+.card-header-text {
+  display: grid;
+  gap: 4px;
+}
+.card-vouched {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #4ade80; /* Green */
+  background: rgba(74, 222, 128, 0.1);
+  padding: 4px 8px;
+  border-radius: 99px;
+  border: 1px solid rgba(74, 222, 128, 0.2);
+}
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--white);
+  text-decoration: none;
+}
+.card-location {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+.card-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--card);
+}
+
+.card-meta {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+/* We'll add stars later */
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--card);
+  padding-top: 0.75rem;
+}
+.card-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--white);
+}
+.card-price span {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.card-actions .btn-save {
+  background: var(--card);
+  color: var(--white);
+}
+
+/* --- Add this to the bottom of FindJobs.css --- */
+
+.filter-group ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  color: var(--muted);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.filter-group input[type="radio"],
+.filter-group input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+}
+
+.price-slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--white);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.price-slider {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.rating-group {
+  display: flex;
+  gap: 0.25rem;
+  color: var(--muted);
+  font-size: 1.5rem;
+}
+.rating-group .star {
+  cursor: pointer;
+}
+.rating-group .star.active {
+  color: #ffd166;
+}
