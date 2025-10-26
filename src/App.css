@@ -1,28 +1,28 @@
 @font-face {
   font-family: 'Inter';
-  /* Make sure this font file exists or use a reliable CDN/import method */
-  /* src: local('Inter'), url('https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_rK.woff2') format('woff2'); */
-  /* Using system-ui as fallback */
+  /* Using system-ui as fallback - ensure font is loaded if needed */
   font-weight: 400 800;
   font-display: swap;
 }
 :root{
-  --bg:#0b2a3b;
-  --bg-2:#0f3b52;
-  --card:#112f41;
-  --muted:#88a6b9;
-  --accent:#1fb6ff;
-  --accent-2:#ff8a3d; /* Used for required * */
+  --bg:#071b26;          /* page background */
+  --bg-2:#0b2736;        /* panels/cards */
+  --card:#14394d;        /* borders & subtle fills */
+  --muted:#90a9b9;
+  --accent:#1fb6ff;      /* blue accents */
+  --accent-2:#ff8a3d;    /* orange accents */
   --ring:#0ea5e9;
   --white:#f7fbff;
   --shadow:0 10px 24px rgba(2,12,22,.25);
-  --radius:16px; /* Used in Auth.css, PostJob.css, etc. */
-  --status-open: #38bdf8; /* Light blue */
-  --status-in-progress: #facc15; /* Yellow */
-  --status-completed: #4ade80; /* Green */
-  --status-rejected: #f87171; /* Red */
-  --status-pending: #fbbf24; /* Amber */
+  --radius:16px;
+
+  --status-open:#38bdf8;
+  --status-in-progress:#facc15;
+  --status-completed:#4ade80;
+  --status-rejected:#f87171;
+  --status-pending:#fbbf24;
 }
+
 
 *{box-sizing:border-box}
 
@@ -30,76 +30,178 @@
 html,
 body,
 #root {
-  height: 100%; /* Ensure root takes full height */
+  height: 100%;
   margin: 0;
+  padding: 0;
 }
 
 body {
   margin:0;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif; /* Added fallbacks */
-  background: var(--bg); /* Use root variable */
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
   color: var(--white);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6; /* Add default line height */
 }
 
 .app-root {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* Make app root at least full viewport height */
+  min-height: 100vh; /* Ensure app root takes at least full viewport height */
 }
 
 .main-content-area {
-  flex-grow: 1; /* Allows this section to grow and push footer down */
+  flex-grow: 1; /* Allows this main area to expand and push footer down */
 }
 /* --- End Sticky Footer --- */
 
 
 a{color:inherit; text-decoration:none}
-img{max-width:100%; display:block}
+img{max-width:100%; display:block} /* Basic image reset */
 
-.bq-container{ width:min(1120px, 92vw); margin:0 auto }
+/* Global Container */
+.bq-container{ width:min(1120px, 92vw); margin-left: auto; margin-right: auto; } /* Centered container */
 
-/* General Button Styles (copied from Home.css for consistency) */
-.btn{ border:0; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600; transition: transform .15s ease, box-shadow .15s ease, background .2s ease; text-decoration: none; display: inline-block; text-align: center;}
-.btn:hover{ transform: translateY(-1px); box-shadow: 0 0 0 3px rgba(31,182,255,.15), 0 10px 24px rgba(2,12,22,.25) }
+/* --- General Button Styles --- */
+/* Base styles */
+.btn{
+  border: none; /* Changed from 0 */
+  padding: 10px 16px; /* Adjusted padding slightly */
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem; /* Slightly smaller base font */
+  transition: transform .15s ease, box-shadow .15s ease, background-color .2s ease, border-color .2s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  line-height: 1.4; /* Ensure text centers well */
+  white-space: nowrap; /* Prevent wrapping */
+}
+.btn:hover{
+    transform: translateY(-1px);
+    /* Add subtle shadow based on type below */
+}
 .btn:active{ transform: translateY(0) scale(.98) }
-.btn-primary{ background:linear-gradient(180deg,#ff944d,#ff7a1a); color:#1a1a1a }
-.btn-secondary{ background:#162f41; border:1px solid #27475d; color:#dbeafe }
-.btn-accent{ background:#1fb6ff; color:#052130 }
-.btn-outline{ background:transparent; border:1px solid rgba(255,255,255,.25); color:var(--white) }
-.btn-ghost{ background:transparent; border:1px solid #274a60; color:#dbeafe } /* Added from Home.css Quester button */
-.btn.lg{ padding:14px 18px; font-size:1.05rem; border-radius:12px }
-.btn.block{ width:100% } /* Utility */
+
+/* Variations (Aligned with original Home.css and dark theme) */
+.btn-primary{
+    background: linear-gradient(180deg,#ff944d,#ff7a1a); /* Orange gradient */
+    color: #1a1a1a; /* Dark text */
+    box-shadow: var(--shadow);
+}
+.btn-primary:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 0 0 3px rgba(255, 138, 61, 0.2), var(--shadow);
+}
+
+.btn-secondary{
+    background: #162f41; /* Darker blue */
+    border: 1px solid #27475d; /* Subtle border */
+    color: #dbeafe; /* Light text */
+}
+.btn-secondary:hover {
+    background: #1c394c;
+    border-color: #3b6b88;
+}
+
+.btn-accent{
+    background: var(--accent); /* Bright blue */
+    color: #052130; /* Dark text */
+    box-shadow: var(--shadow);
+}
+.btn-accent:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 0 0 3px rgba(31, 182, 255, 0.2), var(--shadow);
+}
+
+.btn-outline{
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, .3); /* Lighter border */
+    color: var(--white);
+}
+.btn-outline:hover {
+    background: rgba(255, 255, 255, .05);
+    border-color: rgba(255, 255, 255, .5);
+}
+
+.btn-ghost{ /* Often used for less prominent actions */
+    background: transparent;
+    border: 1px solid transparent; /* No border initially */
+    color: var(--muted);
+}
+.btn-ghost:hover {
+    background: var(--card); /* Use card bg on hover */
+    color: var(--white);
+}
+
+.btn-danger {
+    background: #450a0a; border: 1px solid #7f1d1d; color: #fecaca;
+}
+.btn-danger:hover { background: #7f1d1d; color: #fee2e2; }
+
+/* Sizes */
+.btn.lg{ padding: 14px 22px; font-size: 1.05rem; border-radius: 12px }
+.btn.block{ width: 100% }
 
 
 /* --- Footer Styles --- */
 .bq-footer{
-  background:#0a1b25;
-  color:#c6d6e2;
+  background:#0a1b25; /* Darker background */
+  color:#a1b5c4; /* Muted text color */
   margin-top: auto; /* Pushes footer down */
-  border-top:1px solid rgba(255,255,255,.06);
+  border-top:1px solid rgba(255,255,255,.06); /* Subtle top border */
+  padding: 1rem 0; /* Add some padding */
 }
-.footer-top{ display:flex; align-items:center; justify-content:space-between; padding:18px 6px }
-.brand-footer .brand-badge{ background:#0b2330 } /* Specific styling for footer brand badge */
-.footer-links{ display:flex; gap:18px }
+.footer-top{
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping */
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1rem;
+    gap: 1rem; /* Space between items */
+    border-bottom: 1px solid rgba(255,255,255,.06); /* Separator */
+    margin-bottom: 1rem;
+}
+.brand-footer { display:flex; align-items:center; gap:10px; font-weight:700; color: var(--white); }
+.brand-footer .brand-badge{ width:34px; height:34px; display:grid; place-items:center; border-radius:10px; background:#081924; border:2px solid #f59e0b; color:#f59e0b; box-shadow: inset 0 0 0 2px rgba(245,158,11,.25); }
+.brand-footer .brand-text{ letter-spacing:.2px }
+.footer-links{ display:flex; gap:1.5rem; /* Increased gap */ font-size: 0.9rem; }
 .footer-links a:hover { text-decoration: underline; color: var(--white); }
 .socials{ display:flex; gap:10px }
-.soc{
-    width:32px; height:32px; display:grid; place-items:center;
-    border-radius:10px; background:#0f2634; border:1px solid #1f3b4d;
-    font-weight: bold; text-transform: lowercase; font-family: sans-serif; /* Basic styling for f, t, i */
-    transition: background 0.2s ease;
-}
-.soc:hover { background: var(--card); }
-.footer-bottom{ text-align:center; font-size:.85rem; padding:10px 0 18px; color:#9fb5c4 }
+.soc{ width:32px; height:32px; display:grid; place-items:center; border-radius:10px; background:#0f2634; border:1px solid #1f3b4d; color: var(--muted); font-weight: bold; text-transform: lowercase; font-family: sans-serif; transition: background 0.2s ease, color 0.2s ease; }
+.soc:hover { background: var(--card); color: var(--white); }
+.footer-bottom{ text-align:center; font-size:.85rem; color:#7d91a0; /* Slightly darker muted color */ }
 
-/* REVEAL ANIMATIONS (Keep from original App.css) */
-.reveal-up{ opacity:0; transform: translateY(24px) }
-.reveal-up.in{ animation: rise .7s cubic-bezier(.2,.75,.18,1) forwards }
-@keyframes rise{
-  to { opacity:1; transform: translateY(0) }
+/* REVEAL ANIMATIONS */
+.reveal-up{ opacity:0; transform: translateY(24px); transition: opacity 0.7s cubic-bezier(.2,.75,.18,1), transform 0.7s cubic-bezier(.2,.75,.18,1); }
+.reveal-up.in{ opacity:1; transform: translateY(0); }
+/* @keyframes rise defined below if needed, but transition is smoother */
+
+
+/* General Card Styling */
+.card {
+  background: var(--bg-2);
+  border: 1px solid var(--card);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Adjusted shadow */
 }
+.card.section {
+    padding: 1.5rem;
+}
+
+/* Pill Styles */
+.pill{ background:var(--card); border:1px solid #274a60; color:#bfe7ff; padding:6px 10px; border-radius:999px; font-size:.75rem; font-weight:600; display: inline-block; line-height: 1; }
+.pill.slate{ background:#0e2230; color:#92b3c7 }
+.pill.gold{ background:rgba(161, 98, 7, 0.2); border-color:rgba(217, 119, 6, 0.4); color:#f59e0b }
+.pill.tiny{ padding:3px 8px; font-size:.7rem; }
+.pill.clickable{ cursor:pointer; user-select:none }
+.pill.active{ outline: 2px solid var(--accent-2); box-shadow: 0 0 8px rgba(255, 138, 61, 0.3); }
+.pill.clickable:hover{ filter: brightness(1.1); }
+
+/* Dot Separator */
+.dotsep{ opacity:.6; margin: 0 5px; font-weight: normal; }
 
 /* Form Select default styling */
 .form-select {
@@ -111,6 +213,11 @@ img{max-width:100%; display:block}
   font-size: 1rem;
   font-family: inherit;
   cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2388a6b9'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 1.2em;
 }
 .form-select:focus {
   outline: none;
@@ -118,25 +225,7 @@ img{max-width:100%; display:block}
   box-shadow: 0 0 0 3px rgba(31, 182, 255, .2);
 }
 
-/* General Card Styling (used across multiple pages) */
-.card {
-  background: var(--bg-2); /* Use secondary bg */
-  border: 1px solid var(--card); /* Use card border color */
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+/* Basic Link Style */
+a:hover {
+    color: var(--accent); /* Consistent hover color */
 }
-.card.section { /* Add padding if it's a section card */
-    padding: 1.5rem;
-}
-
-/* Pill Styles (copied from Home.css) */
-.pill{ background:#0f2634; border:1px solid #274a60; color:#bfe7ff; padding:6px 10px; border-radius:999px; font-size:.72rem; font-weight:700; display: inline-block; }
-.pill.slate{ background:#0e2230; color:#92b3c7 }
-.pill.gold{ background:#2b1d05; border-color:#7c5200; color:#ffd38a }
-.pill.tiny{ padding:2px 8px; font-size:.65rem; border-radius:999px; background:#142738; border-color:#294d64; color:#bfe7ff }
-.pill.clickable{ cursor:pointer; user-select:none }
-.pill.active{ outline: 2px solid rgba(255, 212, 128, .35) }
-.pill.clickable:hover{ filter: brightness(1.05) }
-
-/* Dot Separator (copied from Home.css) */
-.dotsep{ opacity:.6; margin: 0 4px;}

@@ -16,11 +16,24 @@
   display: grid;
   gap: 1.5rem;
   align-content: start;
+  /* Added card styles */
+  background: #0c2635; /* Darker solid color */
+  border: 1px solid var(--card);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  align-self: start;
+  position: sticky;
+  top: 100px;
 }
 
 .filter-group {
-  border-bottom: 1px solid var(--card);
+  border-bottom: 1px solid #20455b; /* Darker, more visible border */
   padding-bottom: 1.5rem;
+}
+.filter-group:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 .filter-group h3 {
   margin: 0 0 1rem;
@@ -29,7 +42,7 @@
 }
 .filter-group .map-placeholder {
   height: 150px;
-  background: var(--bg-2);
+  background: var(--bg); /* Darker than sidebar bg */
   border: 1px solid var(--card);
   border-radius: 10px;
   display: grid;
@@ -56,6 +69,28 @@
   color: var(--white);
 }
 
+/* --- NEW: Style for Sort By dropdown --- */
+.results-header .form-select {
+  background: var(--bg-2);
+  border: 1px solid var(--card);
+  color: var(--white);
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.results-header .form-select:hover {
+  border-color: var(--accent);
+  background: var(--card);
+}
+.results-header .form-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(31, 182, 255, .2);
+}
+/* --- End new block --- */
+
+
 .results-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 2 columns like the design */
@@ -71,7 +106,7 @@
 
 /* === Quest Card (in a separate component) === */
 .quest-card {
-  background: var(--bg-2);
+  background: #0c2635; /* Darker solid color */
   border: 1px solid var(--card);
   border-radius: var(--radius);
   padding: 1rem;
@@ -79,11 +114,19 @@
   grid-template-rows: auto 1fr auto;
   gap: 0.75rem;
   transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 .quest-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 0 1px var(--accent), var(--shadow);
+  transform: translateY(-3px); /* More lift */
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--accent);
   border-color: var(--accent);
+  background-color: #112f41; /* Slightly lighter bg on hover */
+}
+.quest-card:hover .card-image {
+  border-color: var(--accent); /* Highlight image on card hover */
+}
+.quest-card:hover .card-title {
+  color: var(--accent); /* Highlight title on card hover */
 }
 
 .card-header {
@@ -109,6 +152,7 @@
   font-weight: 700;
   color: var(--white);
   text-decoration: none;
+  transition: color 0.2s ease; /* Added transition */
 }
 .card-location {
   font-size: 0.9rem;
@@ -121,6 +165,7 @@
   object-fit: cover;
   border-radius: 10px;
   border: 1px solid var(--card);
+  transition: border-color 0.2s ease; /* Added transition */
 }
 
 .card-meta {
@@ -175,6 +220,10 @@
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
+  transition: color 0.2s ease;
+}
+.filter-group label:hover {
+  color: var(--white);
 }
 
 .filter-group input[type="radio"],
@@ -206,7 +255,12 @@
 }
 .rating-group .star {
   cursor: pointer;
+  transition: all 0.15s ease; /* Added transition */
 }
 .rating-group .star.active {
   color: #ffd166;
+}
+.rating-group .star:not(.active):hover {
+  color: #fde047; /* Lighter yellow */
+  transform: scale(1.1);
 }

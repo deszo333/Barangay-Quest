@@ -1,6 +1,6 @@
 import { NavLink, Link } from "react-router-dom";
-import "./Navbar.css";
-// Import badge style if not already globally imported
+import "./Navbar.css"; // Use the restored Navbar.css
+// Import badge style
 import '../pages/AchievementsPage.css';
 
 // Badge Definitions
@@ -20,6 +20,7 @@ export default function Navbar({ user, onLogoutClick }) {
     const badges = getUserBadges(user); // Get badges for the logged-in user
 
   return (
+    // Use the class defined in Navbar.css
     <header className="navbar">
       <div className="brand">
         <Link to="/" className="brand-link">Barangay <b>Quest</b></Link>
@@ -43,17 +44,16 @@ export default function Navbar({ user, onLogoutClick }) {
         {user ? (
           // --- Logged In View ---
           <>
-            {/* Links only visible when logged in (approved or pending) */}
+            {/* Links only visible when logged in */}
             <NavLink to="/my-applications" className="nav-link" style={{padding: '8px 10px', marginRight: '5px'}}>My Applications</NavLink>
             <NavLink to="/my-quests" className="nav-link" style={{padding: '8px 10px', marginRight: '10px'}}>My Quests</NavLink>
-            {/* --- ADD Settings Link --- */}
             <NavLink to="/settings" className="nav-link" style={{padding: '8px 10px', marginRight: '10px'}}>Settings</NavLink>
 
             {/* Display User Name with Badges */}
             <span style={{marginRight: "12px", fontWeight: "600", color: 'var(--white)'}}>
               Hi, {user.name}!
               {badges.map(badge => (
-                  <span key={badge.id} className="user-badge" title={badge.id.replace(/_/g, ' ')}> {/* Basic tooltip */}
+                  <span key={badge.id} className="user-badge" title={badge.id.replace(/_/g, ' ')}>
                       {badge.icon}
                   </span>
               ))}

@@ -35,17 +35,19 @@
   font-weight: 600;
   cursor: pointer;
   border-radius: 8px; /* Rounded corners for buttons */
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .achievements-tab-button.active {
   background-color: var(--accent); /* Accent color for active */
   color: #052130; /* Dark text on accent */
   font-weight: 700;
+  /* Removed gradient/shadow from tab */
 }
 .achievements-tab-button:not(.active):hover {
     background-color: var(--card);
     color: var(--white);
+    transform: translateY(-1px); /* Subtle lift */
 }
 
 
@@ -60,8 +62,8 @@
 
 /* Achievement Card */
 .achievement-card {
-  background: var(--bg-2);
-  border: 1px solid var(--card);
+  background: #0c2635; /* Darker solid color */
+  border: 1px solid #1a3f53; /* Slightly lighter border */
   border-radius: var(--radius);
   padding: 1.5rem;
   display: grid; /* Use grid for layout inside card */
@@ -69,8 +71,16 @@
   gap: 1.25rem;
   align-items: center;
   opacity: 0.6; /* Default: locked appearance */
-  transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
   position: relative; /* For potential future elements like tooltips */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.achievement-card:not(.unlocked):hover {
+    opacity: 0.7;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    background-color: #112f41; /* Slightly lighter bg on hover */
 }
 
 .achievement-card.unlocked {
@@ -78,8 +88,10 @@
   border-left: 4px solid var(--accent); /* Highlight unlocked */
 }
 .achievement-card.unlocked:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow);
+    transform: translateY(-4px); /* More lift */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--accent);
+    border-color: var(--accent); /* Accent border on hover */
+    background-color: #112f41; /* Slightly lighter bg on hover */
 }
 
 .achievement-icon {
@@ -91,6 +103,7 @@
   border-radius: 12px;
   background-color: var(--card); /* Background for icon */
   filter: grayscale(80%); /* Locked: grayscale icon */
+  transition: all 0.3s ease;
 }
 .achievement-card.unlocked .achievement-icon {
   filter: none; /* Unlocked: full color */
@@ -124,6 +137,7 @@
   background-color: var(--accent);
   border-radius: 99px;
   transition: width 0.5s ease-in-out;
+  box-shadow: 0 0 8px rgba(31, 182, 255, 0.5); /* Added glow */
 }
 
 .progress-text {
@@ -141,7 +155,7 @@
     align-content: start;
 }
 .sidebar-card {
-    background: var(--bg-2);
+    background: #0c2635; /* Darker solid color */
     border: 1px solid var(--card);
     border-radius: var(--radius);
     padding: 1.5rem;

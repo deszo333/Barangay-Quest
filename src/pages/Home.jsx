@@ -2,16 +2,16 @@ import React, { useEffect, useRef, useState } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
 import { db } from "../firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
-import "./Home.css";
+import "./Home.css"; // Use the restored Home.css
 // Import badge style if needed globally or ensure App.css has it
 import '../pages/AchievementsPage.css';
 
 // Constants
 const AUTOPLAY_MS = 2000;
 const HERO_SLIDES = [
-  { url: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2000&auto=format&fit=crop", caption: "Laptop teamwork (sample)" },
-  { url: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=2000&auto=format&fit=crop", caption: "Community gathering (sample)" },
-  { url: "/gok.jpg", caption: "Helpers in barangay (sample)" },
+  { url: "/luff.jpg", caption: "Local Hero Image 1" },
+  { url: "/gok.jpg", caption: "Local Hero Image 2" },
+  { url: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=2000&auto=format&fit=crop", caption: "Helpers sample" },
 ];
 
 // SVG Icons
@@ -72,6 +72,7 @@ function formatDate(timestamp) {
   return "Just now";
 }
 
+// Main Home Component
 export default function Home() {
   useRevealOnScroll();
   const { user } = useOutletContext();
@@ -89,11 +90,11 @@ export default function Home() {
   useEffect(() => { if (prefersReduced) return; startAuto(); return () => { stopAuto(); }; }, [index, isPaused, prefersReduced]);
   function stopAuto() { if (autoRef.current) clearInterval(autoRef.current); }
   function startAuto() { stopAuto(); if (!isPaused) { autoRef.current = setInterval(() => setIndex((i) => (i + 1) % HERO_SLIDES.length), AUTOPLAY_MS); } }
-  const goTo = (i) => { setIndex(i);};
-  const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; touchDeltaX.current = 0; };
+  const goTo = (i) => { setIndex(i); stopAuto(); startAuto(); };
+  const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; touchDeltaX.current = 0; stopAuto(); };
   const onTouchMove  = (e) => { touchDeltaX.current = e.touches[0].clientX - touchStartX.current; };
-  const onTouchEnd   = ()  => { const threshold = 60; if (touchDeltaX.current > threshold) setIndex((i) => (i - 1 + HERO_SLIDES.length) % HERO_SLIDES.length); else if (touchDeltaX.current < -threshold) setIndex((i) => (i + 1) % HERO_SLIDES.length); };
-  const onKeyDown = (e) => { if (e.key === "ArrowRight") setIndex((i) => (i + 1) % HERO_SLIDES.length); if (e.key === "ArrowLeft")  setIndex((i) => (i - 1 + HERO_SLIDES.length) % HERO_SLIDES.length); };
+  const onTouchEnd   = ()  => { const threshold = 60; if (touchDeltaX.current > threshold) setIndex((i) => (i - 1 + HERO_SLIDES.length) % HERO_SLIDES.length); else if (touchDeltaX.current < -threshold) setIndex((i) => (i + 1) % HERO_SLIDES.length); startAuto(); };
+  const onKeyDown = (e) => { if (e.key === "ArrowRight") { setIndex((i) => (i + 1) % HERO_SLIDES.length); stopAuto(); startAuto(); } if (e.key === "ArrowLeft")  { setIndex((i) => (i - 1 + HERO_SLIDES.length) % HERO_SLIDES.length); stopAuto(); startAuto(); } };
 
   // Top Questers State & Fetch
   const [topQuesters, setTopQuesters] = useState([]);
@@ -162,29 +163,128 @@ export default function Home() {
     fetchBuzz();
   }, []);
 
+  // Render the Home page
   return (
     <main className="home">
-      {/* HERO Section */}
-      <section className="hero polished reveal-up" /* ...props... */ >
-         <div className="hero-bg" style={{ backgroundImage: `url(${HERO_SLIDES[index].url})` }}/> <div className="hero-overlay"/>
-         <div className="bq-container hero-grid"> <div className="hero-copy"> <h1>Find quest.<br/><span>EMPOWER COMMUNITY</span></h1> <p className="sub">Vouched Jobs</p> <div className="hero-cta"> <Link to="/find-jobs" className="btn btn-accent">Browse</Link> {user && user.status === 'approved' ? (<Link to="/post-job" className="btn btn-secondary">Post</Link>) : (<Link to="/signup" className="btn btn-secondary" onClick={(e) => { if(user) e.preventDefault(); }}>Post</Link>) } </div> </div> </div>
-         <div className="hero-dots"> {HERO_SLIDES.map((_, i) => ( <button key={i} type="button" className={`dot ${index === i ? " active" : ""}`} onClick={() => goTo(i)} /> ))} </div>
+      {/* --- HERO Section --- */}
+      <section
+        className="hero polished reveal-up"
+        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+        onKeyDown={onKeyDown} tabIndex={0}
+        onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}
+        onFocus={() => setIsPaused(true)} onBlur={() => setIsPaused(false)}
+      >
+        <div className="hero-bg" style={{ backgroundImage: `url(${HERO_SLIDES[index].url})` }} aria-hidden="true" />
+        <div className="hero-overlay" aria-hidden="true" />
+        <div className="bq-container hero-grid">
+          <div className="hero-copy">
+            {/* Using text from screenshot */}
+            <h1> Find quest.<br /> <span>EMPOWER COMMUNITY</span> </h1>
+            <p className="sub">Vouched Jobs</p>
+            <div className="hero-cta">
+              {/* Using text from screenshot */}
+              <Link to="/find-jobs" className="btn btn-accent">Browse</Link>
+              {user && user.status === 'approved' ? (
+                  <Link to="/post-job" className="btn btn-secondary"> Post </Link>
+              ) : ( // Link to signup if not approved/logged in
+                   <Link to="/signup" className="btn btn-secondary" onClick={(e) => { if(user) { e.preventDefault(); navigate('/pending-approval'); } /* Redirect pending users */ }}> Post </Link>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="hero-dots" role="tablist" aria-label="Hero slides">
+          {HERO_SLIDES.map((_, i) => (
+            <button key={i} type="button" role="tab" aria-selected={index === i} aria-label={`Go to slide ${i + 1}`} className={"dot" + (index === i ? " active" : "")} onClick={() => goTo(i)} />
+          ))}
+        </div>
       </section>
 
-      {/* AFTER HERO Section */}
+      {/* --- AFTER HERO Section --- */}
       <section className="content-wrap reveal-up">
         <div className="bq-container content-grid">
           {/* Main column */}
           <div className="main-col">
-            <div className="card section"> <div className="section-head"><h3>Find Here</h3></div> <p className="section-note">Examples...</p> <div className="categories-grid"> {CATEGORIES_DISPLAY.map((label) => ( <CategoryCard key={label} Icon={CATEGORY_ICONS[label]} label={label} /> ))} </div> </div>
-            <div className="card section"> <div className="section-head"><h3>Community Buzz</h3></div> {buzzLoading ? <p>Loading...</p> : buzzItems.length === 0 ? <p>No activity.</p> : ( <div className="buzz-list"> {buzzItems.map((b, i) => ( <div key={i} className="buzz-item"> <div className="buzz-icon"><b.icon /></div> <div className="buzz-body"> <div className="buzz-top"> <strong>{b.name}</strong><span className="dotsep">•</span> <span className="ago">{b.ago}</span> </div> <p className="buzz-text">{b.text}</p> </div> </div> ))} </div> )} </div>
-            <div className="card section safety"> <div className="section-head"><h3>Safety</h3></div> <ul className="safety-list"> <li><span className="s-ico"><IconShield /></span> Verified</li> <li><span className="s-ico"><IconCard /></span> Secure Pay</li> <li><span className="s-ico"><IconHandshake /></span> Support</li> <li><span className="s-ico"><IconMegaphone /></span> Endorsed</li> </ul> </div>
+            {/* Find Here Section */}
+            <div className="card section">
+              <div className="section-head"><h3>Here you can find jobs like: </h3></div>
+              <p className="section-note"> </p>
+              <div className="categories-grid">
+                {CATEGORIES_DISPLAY.map((label) => (
+                  <CategoryCard key={label} Icon={CATEGORY_ICONS[label]} label={label} />
+                ))}
+              </div>
+            </div>
+
+            {/* Community Buzz Section */}
+            <div className="card section">
+              <div className="section-head"><h3>Community Buzz</h3></div>
+              {buzzLoading ? ( <p>Loading recent activity...</p> ) : buzzItems.length === 0 ? ( <p>No recent community activity.</p> ) : (
+                <div className="buzz-list">
+                  {buzzItems.map((b, i) => (
+                    <div key={i} className="buzz-item">
+                      <div className="buzz-icon" aria-hidden="true"><b.icon /></div>
+                      <div className="buzz-body">
+                        <div className="buzz-top"> <strong>{b.name}</strong><span className="dotsep">•</span> <span className="ago">{b.ago}</span> </div>
+                        <p className="buzz-text">{b.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Safety & Trust Section */}
+            <div className="card section safety">
+              <div className="section-head"><h3>Safety & Trust</h3></div>
+              <ul className="safety-list">
+                <li><span className="s-ico"><IconShield /></span> Verified</li>
+                <li><span className="s-ico"><IconCard /></span> Secure Pay</li>
+                <li><span className="s-ico"><IconHandshake /></span> Support</li>
+                <li><span className="s-ico"><IconMegaphone /></span> Endorsed</li>
+              </ul>
+            </div>
           </div>
 
           {/* Side column */}
           <aside className="side-col">
-            <div className="card section top-questers"> <div className="section-head"> <h3>Top Questers</h3> </div> {questersLoading ? <p>Loading...</p> : topQuesters.length === 0 ? <p>None yet.</p> : ( <div className="questers"> {topQuesters.map((q) => ( <Quester key={q.id} id={q.id} name={q.name} role={q.role || 'Quester'} img={q.avatarUrl || `https://ui-avatars.com/api/?name=${q.name}&background=random`} completed={q.questsCompleted || 0} rating={q.avgRating} user={user} onRequireAuth={requireAuth} statLabel="Done"/> ))} </div> )} </div>
-            <div className="card section top-questers"> <div className="section-head"> <h3>Top Givers</h3> </div> {giversLoading ? <p>Loading...</p> : topQuestGivers.length === 0 ? <p>None yet.</p> : ( <div className="questers"> {topQuestGivers.map((g) => ( <Quester key={g.id} id={g.id} name={g.name} role={g.role || 'Quest Giver'} img={g.avatarUrl || `https://ui-avatars.com/api/?name=${g.name}&background=random`} completed={g.questsGivenCompleted || 0} rating={g.avgRating} statLabel="Completed" user={user} onRequireAuth={requireAuth} /> ))} </div> )} <div className="tq-actions"> <Link to="/achievements" className="btn btn-accent">Achievements</Link> {!user && ( <Link to="/signup" className="btn btn-secondary">Become Quester</Link> )} </div> </div>
+            {/* Top Questers Section */}
+            <div className="card section top-questers">
+              <div className="section-head"> <h3>Top Questers</h3> </div>
+              {questersLoading ? ( <p>Loading...</p> ) : topQuesters.length === 0 ? ( <p>None yet.</p> ) : (
+                <div className="questers">
+                  {topQuesters.map((q) => (
+                    <Quester
+                      key={q.id} id={q.id} name={q.name} role={q.role || 'Quester'}
+                      img={q.avatarUrl || `https://ui-avatars.com/api/?name=${q.name}&background=random`}
+                      completed={q.questsCompleted || 0} rating={q.avgRating}
+                      user={user} onRequireAuth={requireAuth} statLabel="Done"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Top Quest Givers Section */}
+             <div className="card section top-questers">
+              <div className="section-head"> <h3>Top Givers</h3> </div>
+              {giversLoading ? ( <p>Loading...</p> ) : topQuestGivers.length === 0 ? ( <p>None yet.</p> ) : (
+                <div className="questers">
+                  {topQuestGivers.map((g) => (
+                    <Quester
+                      key={g.id} id={g.id} name={g.name} role={g.role || 'Quest Giver'}
+                      img={g.avatarUrl || `https://ui-avatars.com/api/?name=${g.name}&background=random`}
+                      completed={g.questsGivenCompleted || 0} rating={g.avgRating}
+                      statLabel="Completed" user={user} onRequireAuth={requireAuth}
+                    />
+                  ))}
+                </div>
+              )}
+              {/* Buttons Section */}
+              <div className="tq-actions">
+                <Link to="/achievements" className="btn btn-accent">Achievements</Link>
+                {!user && ( <Link to="/signup" className="btn btn-secondary">Become Quester</Link> )}
+              </div>
+            </div>
           </aside>
         </div>
       </section>
@@ -207,7 +307,7 @@ function CategoryCard({ Icon, label }) {
   return ( <button type="button" className="category"> <span className="cat-ico"><Icon /></span> <span className="cat-label">{label}</span> </button> );
 }
 
-// Quester Component (Shows dynamic statLabel, no Hire button)
+// Quester/Giver Card Component
 function Quester({ id, name, role, img, completed, rating, medal, user, onRequireAuth, statLabel = "Done" }) {
   return (
     <div className="quester">

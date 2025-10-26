@@ -1,12 +1,13 @@
-/* 1. Navbar background (from your App.css dark theme) */
+/* Navbar background (Dark theme) */
 .navbar {
   position: sticky;
   top: 0;
   z-index: 50;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto 1fr auto; /* Adjust columns: Brand | Links | Auth */
   align-items: center;
-  padding: 14px 32px; /* Adjusted padding */
+  padding: 14px 32px; /* Standard padding */
+  gap: 2rem; /* Add gap between sections */
 
   /* Dark theme styles */
   background: rgba(8, 26, 36, .9);
@@ -14,20 +15,28 @@
   box-shadow: 0 1px 0 rgba(255, 255, 255, .06);
 }
 
-/* 2. Brand (make text white) */
-.brand { 
-  justify-self: start; 
+/* Brand */
+.brand {
+  justify-self: start;
 }
 .brand-link {
   text-decoration: none;
-  color: var(--white, #f7fbff); /* Use CSS var from App.css, with fallback */
+  color: var(--white, #f7fbff);
   font-size: 1.6rem;
   font-weight: 700;
+  display: flex; /* Ensure inline display */
+  align-items: center;
+  gap: 8px; /* Space between badge and text if needed */
+}
+/* Style for the <b> tag */
+.brand-link b {
+    font-weight: 800; /* Make 'Quest' bolder */
 }
 
-/* 3. Nav Links (make text white, active state orange) */
+
+/* Nav Links */
 .nav-center {
-  justify-self: center;
+  justify-self: center; /* Center the nav links */
   display: flex;
   gap: 32px;
 }
@@ -41,8 +50,9 @@
   transition: color .2s, background .2s, box-shadow .2s;
   opacity: .9;
   position: relative;
+  white-space: nowrap; /* Prevent wrapping */
 }
-.nav-link:hover { 
+.nav-link:hover {
   background: rgba(255, 255, 255, .05); /* Subtle hover */
   opacity: 1;
 }
@@ -50,7 +60,7 @@
   opacity: 1;
   color: var(--white, #f7fbff);
 }
-/* Active line (from App.css) */
+/* Active line */
 .nav-link.active::after {
   content: '';
   position: absolute;
@@ -62,44 +72,79 @@
   border-radius: 2px;
 }
 
-/* 4. Auth Buttons (match App.css btn-outline and btn-primary) */
+/* Auth Buttons/Links */
 .auth {
   justify-self: end;
   display: flex;
+  align-items: center; /* Align items vertically */
   gap: 12px;
 }
+/* Ensure auth links use nav-link styles if needed, or specific button styles */
+.auth .nav-link { /* Style for My Apps/Quests/Settings */
+    padding: 8px 10px;
+    margin-right: 5px; /* Adjust spacing */
+}
+.auth .nav-link:hover {
+    background: rgba(255, 255, 255, .05);
+}
+.auth .nav-link.active::after {
+    bottom: -8px; /* Adjust underline for these links */
+    left: 10px;
+    right: 10px;
+}
+
 
 /* Base button styles from App.css */
-.btn {
+/* These apply to Login/Signup/Logout */
+.auth .btn {
   text-decoration: none;
   font-weight: 600;
   padding: 8px 18px;
-  border-radius: 10px; /* Match App.css */
+  border-radius: 10px;
   border: 1px solid transparent;
   transition: transform .15s ease, box-shadow .15s ease, background .2s ease;
   cursor: pointer;
+  white-space: nowrap; /* Prevent wrapping */
 }
-.btn:hover {
+.auth .btn:hover {
   transform: translateY(-1px);
 }
 
-/* This was .btn.ghost, now styled like .btn-outline */
-.btn.ghost { 
+/* Ghost button style (Login, Logout) */
+.auth .btn.ghost {
   background: transparent;
   border-color: rgba(255, 255, 255, .25);
   color: var(--white, #f7fbff);
 }
-.btn.ghost:hover { 
+.auth .btn.ghost:hover {
   background: rgba(255, 255, 255, .05);
 }
 
-/* This was .btn.solid, now styled like .btn-primary */
-.btn.solid { 
-  color: #1a1a1a; 
-  background: linear-gradient(180deg, #ff944d, #ff7a1a);
+/* Solid button style (Sign Up) */
+.auth .btn.solid {
+  color: #1a1a1a;
+  background: linear-gradient(180deg, #ff944d, #ff7a1a); /* Orange gradient */
   border-color: transparent;
-  box-shadow: 0 10px 24px rgba(2, 12, 22, .25);
+  box-shadow: var(--shadow); /* Use global shadow */
 }
-.btn.solid:hover { 
-  box-shadow: 0 10px 24px rgba(2, 12, 22, .25);
+.auth .btn.solid:hover {
+  filter: brightness(1.1); /* Slight brighten on hover */
+  box-shadow: var(--shadow);
+}
+
+/* User greeting */
+.auth span {
+    margin-right: 12px;
+    font-weight: 600;
+    color: var(--white);
+    white-space: nowrap;
+}
+
+/* Badge specific style from AchievementsPage.css */
+.user-badge {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.8em;
+    vertical-align: middle;
+    cursor: help;
 }

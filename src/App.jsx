@@ -21,7 +21,7 @@ import MyApplications from "./pages/MyApplications.jsx";
 import MyQuests from "./pages/MyQuests.jsx";
 import UserProfilePage from "./pages/UserProfilePage.jsx";
 import AchievementsPage from "./pages/AchievementsPage.jsx";
-import ProfileSettingsPage from "./pages/ProfileSettingsPage.jsx"; // Import Settings Page
+import ProfileSettingsPage from "./pages/ProfileSettingsPage.jsx";
 
 // Main App Component
 export default function App() {
@@ -33,15 +33,9 @@ export default function App() {
       if (firebaseUser) {
         const userDocRef = doc(db, "users", firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          setUser({ uid: firebaseUser.uid, email: firebaseUser.email, ...userDoc.data() });
-        } else {
-          // Add ALL default fields, including avatarUrl: null
-          setUser({ uid: firebaseUser.uid, email: firebaseUser.email, name: "User", status: "pending", unlockedAchievements: [], questsCompleted: 0, questsPosted: 0, questsGivenCompleted: 0, totalRatingScore: 0, numberOfRatings: 0, avatarUrl: null });
-        }
-      } else {
-        setUser(null);
-      }
+        if (userDoc.exists()) { setUser({ uid: firebaseUser.uid, email: firebaseUser.email, ...userDoc.data() }); }
+        else { setUser({ uid: firebaseUser.uid, email: firebaseUser.email, name: "User", status: "pending", unlockedAchievements: [], questsCompleted: 0, questsPosted: 0, questsGivenCompleted: 0, totalRatingScore: 0, numberOfRatings: 0, avatarUrl: null }); }
+      } else { setUser(null); }
       setLoading(false);
     });
     return () => unsubscribe();
@@ -67,7 +61,6 @@ export default function App() {
             <Route path="my-quests" element={<MyQuests />} />
             <Route path="profile/:userId" element={<UserProfilePage />} />
             <Route path="achievements" element={<AchievementsPage />} />
-            {/* --- ADD Settings Route --- */}
             <Route path="settings" element={<ProfileSettingsPage />} />
           </Route>
 

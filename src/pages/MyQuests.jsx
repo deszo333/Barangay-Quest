@@ -30,8 +30,8 @@ function formatDate(timestamp) {
 
 // Badge Definitions
 const ACHIEVEMENT_BADGES = {
-    'seasoned_quester_2': '🌟',
-    'top_rated': '🏆',
+    'seasoned_quester_2': 'ЁЯМЯ',
+    'top_rated': 'ЁЯПЖ',
     'quest_giver_2': ' M' // Placeholder
 };
 function getUserBadges(user) {
@@ -172,13 +172,14 @@ function PostedQuestItem({ quest, onHireApplicant, onRejectApplicant, onMarkComp
       <div className="quest-item-header">
         <div className="quest-item-details">
           <h3>{quest.title}</h3>
-          <p>{quest.location?.address || quest.workType} • {formatDate(quest.createdAt)}</p>
+          <p>{quest.location?.address || quest.workType} тАв {formatDate(quest.createdAt)}</p>
           <p style={{ marginTop: '5px', fontWeight: '600', textTransform: 'capitalize' }} className={`app-status ${quest.status || 'open'}`}> Status: {quest.status || 'Open'} </p>
         </div>
         <div className="quest-item-actions">
            {quest.status === 'open' && <button className="btn btn-secondary">Pause</button>}
            {quest.status !== 'completed' && quest.status !== 'archived' && <button className="btn btn-outline">Edit</button>}
-           {quest.status === 'in-progress' && ( <button className="btn btn-primary" onClick={() => onMarkComplete(quest.id, quest.hiredApplicantId)} > Mark Complete </button> )}
+           {/* --- MODIFIED LINE --- */}
+           {quest.status === 'in-progress' && ( <button className="btn btn-primary" onClick={() => onMarkComplete(quest.id, quest.hiredApplicantId, quest.hiredApplicationData?.id)} > Mark Complete </button> )}
            {quest.status === 'open' && ( <button className="btn btn-danger" onClick={() => onDeleteQuest(quest.id)} > Delete </button> )}
         </div>
       </div>
@@ -294,41 +295,124 @@ export default function MyQuests() {
       setActionMessage("Applicant rejected."); fetchQuests();
     } catch (err) { console.error("Error rejecting applicant:", err); setActionMessage("Error rejecting applicant."); }
   };
-  const handleMarkComplete = async (questId, hiredApplicantId) => {
+  
+  // --- REPLACED/FIXED FUNCTION ---
+  const handleMarkComplete = async (questId, hiredApplicantId, hiredApplicationId) => {
     setActionMessage(`Completing quest ${questId}...`);
+    
+    // Check for missing IDs before starting the transaction
+    if (hiredApplicantId && !hiredApplicationId) {
+        console.warn("hiredApplicationId is missing. Quester/Application state may not be updated correctly.");
+    }
+
     try {
       await runTransaction(db, async (transaction) => {
-          const questRef = doc(db, "quests", questId); const questGiverRef = doc(db, "users", user.uid);
-          const questSnap = await transaction.get(questRef);
-          if (!questSnap.exists() || questSnap.data().status !== 'in-progress') { throw new Error("Quest not in progress."); }
-          transaction.update(questRef, { status: "completed", completedAt: serverTimestamp() });
-          const giverSnap = await transaction.get(questGiverRef); if (!giverSnap.exists()) throw new Error("Giver profile not found!");
-          const giverData = giverSnap.data(); const currentGivenCompleted = giverData.questsGivenCompleted || 0; const newGivenCompleted = currentGivenCompleted + 1;
-          const giverUpdates = { questsGivenCompleted: increment(1) };
-          if (newGivenCompleted === 3 && !giverData.unlockedAchievements?.includes('quest_giver_1')) { giverUpdates.unlockedAchievements = arrayUnion('quest_giver_1'); }
-          if (newGivenCompleted === 10 && !giverData.unlockedAchievements?.includes('quest_giver_2')) { giverUpdates.unlockedAchievements = arrayUnion('quest_giver_2'); }
-          transaction.update(questGiverRef, giverUpdates);
-          if (hiredApplicantId) {
-            const hiredAppQuery = query( collection(db, "applications"), where("questId", "==", questId), where("applicantId", "==", hiredApplicantId), limit(1) );
-            const hiredAppSnapshot = await getDocs(hiredAppQuery);
-             if (!hiredAppSnapshot.empty) {
-                  const hiredAppDoc = hiredAppSnapshot.docs[0]; const hiredAppRef = hiredAppDoc.ref;
-                  transaction.update(hiredAppRef, { status: "completed" });
-                  const questerRef = doc(db, "users", hiredApplicantId); const questerSnap = await transaction.get(questerRef);
-                  if (questerSnap.exists()) {
-                      const questerData = questerSnap.data(); const currentCompleted = questerData.questsCompleted || 0; const newCompleted = currentCompleted + 1;
-                      const questerUpdates = { questsCompleted: increment(1) };
-                      if (newCompleted === 1 && !questerData.unlockedAchievements?.includes('first_quest_completed')) { questerUpdates.unlockedAchievements = arrayUnion('first_quest_completed'); }
-                      if (newCompleted === 5 && !questerData.unlockedAchievements?.includes('seasoned_quester_1')) { questerUpdates.unlockedAchievements = arrayUnion('seasoned_quester_1'); }
-                      if (newCompleted === 15 && !questerData.unlockedAchievements?.includes('seasoned_quester_2')) { questerUpdates.unlockedAchievements = arrayUnion('seasoned_quester_2'); }
-                      transaction.update(questerRef, questerUpdates);
-                  } else { console.warn("Could not find Quester profile:", hiredApplicantId); }
-             } else { console.warn("Could not find Hired Application:", questId); }
-          } else { console.warn("Quest complete but no hiredApplicantId:", questId); }
-        }); // End Transaction
-      setActionMessage("Quest marked as completed!"); fetchQuests();
-    } catch (err) { console.error("Error marking quest complete:", err); setActionMessage(`Error: ${err.message}.`); }
+        
+        // --- 1. DEFINE ALL REFERENCES ---
+        const questRef = doc(db, "quests", questId);
+        const questGiverRef = doc(db, "users", user.uid);
+        let questerRef = null;
+        let hiredAppRef = null;
+
+        if (hiredApplicantId) {
+          questerRef = doc(db, "users", hiredApplicantId);
+        }
+        if (hiredApplicationId) {
+          hiredAppRef = doc(db, "applications", hiredApplicationId);
+        }
+
+        // --- 2. EXECUTE ALL READS FIRST ---
+        const questSnap = await transaction.get(questRef);
+        const giverSnap = await transaction.get(questGiverRef);
+        
+        let questerSnap = null;
+        if (questerRef) {
+          questerSnap = await transaction.get(questerRef);
+        }
+        
+        // Optional: Read app to ensure it exists.
+        if (hiredAppRef) {
+          const appSnap = await transaction.get(hiredAppRef);
+          if (!appSnap.exists()) {
+            console.warn("Could not find Hired Application:", hiredApplicationId);
+            hiredAppRef = null; // Don't try to update a non-existent doc
+          }
+        }
+
+        // --- 3. VALIDATE AND PREPARE WRITES ---
+        
+        // Validate quest and giver
+        if (!questSnap.exists() || questSnap.data().status !== 'in-progress') {
+          throw new Error("Quest not in progress or does not exist.");
+        }
+        if (!giverSnap.exists()) {
+          throw new Error("Giver profile not found!");
+        }
+
+        // Prepare Quest Giver Updates
+        const giverData = giverSnap.data();
+        const currentGivenCompleted = giverData.questsGivenCompleted || 0;
+        const newGivenCompleted = currentGivenCompleted + 1;
+        const giverUpdates = { questsGivenCompleted: increment(1) };
+
+        if (newGivenCompleted === 3 && !giverData.unlockedAchievements?.includes('quest_giver_1')) {
+          giverUpdates.unlockedAchievements = arrayUnion('quest_giver_1');
+        }
+        if (newGivenCompleted === 10 && !giverData.unlockedAchievements?.includes('quest_giver_2')) {
+          giverUpdates.unlockedAchievements = arrayUnion('quest_giver_2');
+        }
+
+        // Prepare Quester (Hired Applicant) Updates
+        let questerUpdates = null;
+        if (questerSnap && questerSnap.exists()) {
+          const questerData = questerSnap.data();
+          const currentCompleted = questerData.questsCompleted || 0;
+          const newCompleted = currentCompleted + 1;
+          questerUpdates = { questsCompleted: increment(1) };
+          
+          if (newCompleted === 1 && !questerData.unlockedAchievements?.includes('first_quest_completed')) {
+            questerUpdates.unlockedAchievements = arrayUnion('first_quest_completed');
+          }
+          if (newCompleted === 5 && !questerData.unlockedAchievements?.includes('seasoned_quester_1')) {
+            questerUpdates.unlockedAchievements = arrayUnion('seasoned_quester_1');
+          }
+          if (newCompleted === 15 && !questerData.unlockedAchievements?.includes('seasoned_quester_2')) {
+            questerUpdates.unlockedAchievements = arrayUnion('seasoned_quester_2');
+          }
+        } else if (hiredApplicantId) {
+          console.warn("Could not find Quester profile:", hiredApplicantId);
+        }
+
+        // --- 4. EXECUTE ALL WRITES LAST ---
+        
+        // Write 1: Update the Quest
+        transaction.update(questRef, { status: "completed", completedAt: serverTimestamp() });
+        
+        // Write 2: Update the Quest Giver
+        transaction.update(questGiverRef, giverUpdates);
+        
+        // Write 3: Update the Hired Application (if found)
+        if (hiredAppRef) {
+          transaction.update(hiredAppRef, { status: "completed" });
+        }
+        
+        // Write 4: Update the Quester (if found)
+        if (questerRef && questerUpdates) {
+          transaction.update(questerRef, questerUpdates);
+        }
+        
+      }); // End Transaction
+      
+      setActionMessage("Quest marked as completed!");
+      fetchQuests();
+      
+    } catch (err) {
+      console.error("Error marking quest complete:", err);
+      setActionMessage(`Error: ${err.message}.`);
+    }
   };
+  // --- END REPLACED FUNCTION ---
+  
   const handleDeleteQuest = async (questId) => {
     if (!window.confirm("Delete this quest?")) { return; }
     setActionMessage(`Deleting quest ${questId}...`);
