@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "15772392583",
+    "project_id": "barangay-quest-mobile",
+    "storage_bucket": "barangay-quest-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:15772392583:android:0db20735088f3ee92cec22",
+        "android_client_info": {
+          "package_name": "com.example.barangay_quest_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCv7BDHvfWBjl2Q3lztprHlMxWp6TI-tc8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
