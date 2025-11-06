@@ -1,0 +1,28 @@
+name: barangay_quest_flutter
+description: Flutter mobile app for Barangay Quest, mirroring the web features with Firebase backend.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Firebase
+  firebase_core:
+  firebase_auth:
+  cloud_firestore:
+  firebase_storage:
+  image_picker:
+  # Routing & UI
+  go_router:
+  google_fonts:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints:
+
+flutter:
+  uses-material-design: true
