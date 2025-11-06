@@ -12,21 +12,12 @@ This document provides a comprehensive overview of the Firebase configuration fo
 ### 2. Android Application Configuration
 - **Package Name**: `com.example.barangay_quest_flutter`
 - **App ID**: `1:15772392583:android:0db20735088f3ee92cec22`
-- **API Key**: `AIzaSyCv7BDHvfWBjl2Q3lztprHlMxWp6TI-tc8`
+- **API Key**: *(Found in `firebase_options.dart` or Firebase Console)*
 
 ### 3. Files Configured
 
 #### `lib/firebase_options.dart`
-Contains Firebase configuration for both Web and Android platforms:
-```dart
-static const FirebaseOptions android = FirebaseOptions(
-  apiKey: 'AIzaSyCv7BDHvfWBjl2Q3lztprHlMxWp6TI-tc8',
-  appId: '1:15772392583:android:0db20735088f3ee92cec22',
-  messagingSenderId: '15772392583',
-  projectId: 'barangay-quest-mobile',
-  storageBucket: 'barangay-quest-mobile.firebasestorage.app',
-);
-```
+Contains Firebase configuration for both Web and Android platforms. The file includes all necessary Firebase options including API key, app ID, messaging sender ID, project ID, and storage bucket. These values are automatically populated from the `google-services.json` file.
 
 #### `android/app/google-services.json`
 Google Services configuration file downloaded from Firebase Console. This file is required for Firebase services to work on Android.
@@ -112,7 +103,7 @@ To verify Firebase is working correctly:
 
 Make sure you have access to the Firebase Console:
 - Console URL: https://console.firebase.google.com/project/barangay-quest-mobile
-- Ensure your email (`esquilloauriell@gmail.com`) is added as a project member
+- Ensure all team members are added as project members with appropriate permissions
 
 ## 🔐 Security Notes
 
