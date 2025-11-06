@@ -35,6 +35,15 @@ class Quest {
 
   factory Quest.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? {};
+    num _parseNum(dynamic v) {
+      if (v is num) return v;
+      if (v is String) {
+        final n = num.tryParse(v.trim());
+        if (n != null) return n;
+      }
+      return 0;
+    }
+
     return Quest(
       id: doc.id,
       title: d['title'] ?? '',
@@ -42,7 +51,7 @@ class Quest {
       workType: d['workType'] ?? 'In Person',
       schedule: d['schedule'],
       budgetType: d['budgetType'] ?? 'Fixed Rate',
-      budgetAmount: (d['budgetAmount'] ?? 0),
+      budgetAmount: _parseNum(d['budgetAmount']),
       description: d['description'] ?? '',
       imageUrl: d['imageUrl'],
       questGiverId: d['questGiverId'] ?? '',

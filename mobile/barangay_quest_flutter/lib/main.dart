@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'theme/app_theme.dart';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
@@ -11,6 +12,7 @@ import 'screens/quest_detail_screen.dart';
 import 'screens/post_job_screen.dart';
 import 'screens/my_applications_screen.dart';
 import 'screens/my_quests_screen.dart';
+import 'screens/quest_applicants_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,7 +38,8 @@ class BarangayQuestApp extends StatelessWidget {
             path: '/find-jobs',
             builder: (context, state) => const FindJobsScreen()),
         GoRoute(
-            path: '/post', builder: (context, state) => const PostJobScreen()),
+            path: '/post-job',
+            builder: (context, state) => const PostJobScreen()),
         GoRoute(
             path: '/my-applications',
             builder: (context, state) => const MyApplicationsScreen()),
@@ -48,16 +51,18 @@ class BarangayQuestApp extends StatelessWidget {
           builder: (context, state) =>
               QuestDetailScreen(questId: state.pathParameters['id']!),
         ),
+        GoRoute(
+          path: '/quest/:id/applicants',
+          builder: (context, state) =>
+              QuestApplicantsScreen(questId: state.pathParameters['id']!),
+        ),
       ],
     );
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Barangay Quest',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF20455B)),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.dark(),
       routerConfig: router,
     );
   }
@@ -75,10 +80,8 @@ class AuthGate extends StatelessWidget {
           return const Scaffold(
               body: Center(child: CircularProgressIndicator()));
         }
-        if (snap.data != null) {
-          return const HomeScreen();
-        }
-        return const LoginScreen();
+        // Always allow browsing Home. Home will adapt its UI for guests vs authed users.
+        return const HomeScreen();
       },
     );
   }
