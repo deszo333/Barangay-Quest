@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Permissions required for Firebase -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    
     <application
         android:label="barangay_quest_flutter"
         android:name="${applicationName}"
