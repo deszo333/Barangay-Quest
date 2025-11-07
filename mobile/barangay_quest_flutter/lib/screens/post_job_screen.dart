@@ -83,13 +83,41 @@ class _PostJobScreenState extends State<PostJobScreen> {
         imageUrl = await ref.getDownloadURL();
       }
 
-      // Create quest doc and update user counters
+      // Create quest doc and update user counters; fetch full name for questGiverName
       await FirebaseFirestore.instance.runTransaction((tx) async {
         final userRef =
             FirebaseFirestore.instance.collection('users').doc(user.uid);
-        tx.update(userRef, {
-          'questsPosted': FieldValue.increment(1),
-        });
+
+        // Get user's full name from profile if available
+        String fullName = '';
+        final profileSnap = await tx.get(userRef);
+        if (profileSnap.exists) {
+          final p = profileSnap.data() as Map<String, dynamic>;
+          final displayName =
+              (p['displayName'] ?? p['name'] ?? '').toString().trim();
+          final firstName = (p['firstName'] ?? '').toString().trim();
+          final lastName = (p['lastName'] ?? '').toString().trim();
+          if (displayName.isNotEmpty) {
+            fullName = displayName;
+          } else if (firstName.isNotEmpty || lastName.isNotEmpty) {
+            fullName =
+                [firstName, lastName].where((s) => s.isNotEmpty).join(' ');
+          }
+        }
+        fullName = fullName.isNotEmpty
+            ? fullName
+            : (user.displayName?.trim().isNotEmpty == true
+                ? user.displayName!.trim()
+                : (user.email ?? 'User'));
+
+        tx.set(
+            userRef,
+            {
+              'questsPosted': FieldValue.increment(1),
+              'displayName': fullName,
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true));
 
         final newQuestRef =
             FirebaseFirestore.instance.collection('quests').doc();
@@ -103,7 +131,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
           'description': _description.text.trim(),
           'imageUrl': imageUrl,
           'questGiverId': user.uid,
-          'questGiverName': user.email, // or fetch profile name
+          'questGiverName': fullName,
           'status': 'open',
           'createdAt': FieldValue.serverTimestamp(),
           'location': {

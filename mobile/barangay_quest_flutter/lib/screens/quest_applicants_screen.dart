@@ -117,7 +117,7 @@ class _QuestApplicantsScreenState extends State<QuestApplicantsScreen> {
         title: const Text('Applicants'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/home'),
+          onPressed: () => context.pop(),
         ),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -167,6 +167,12 @@ class _QuestApplicantsScreenState extends State<QuestApplicantsScreen> {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    IconButton(
+                      tooltip: 'View profile',
+                      onPressed: () =>
+                          context.push('/user/${d['applicantId']}'),
+                      icon: const Icon(Icons.person_outline),
+                    ),
                     if (status == 'pending') ...[
                       TextButton(
                         onPressed: busy ? null : () => _reject(context, doc),
