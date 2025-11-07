@@ -37,6 +37,9 @@ class NavActions extends StatelessWidget {
             PopupMenuButton<String>(
               onSelected: (value) async {
                 switch (value) {
+                  case 'profile':
+                    context.push('/user/${user.uid}');
+                    break;
                   case 'post':
                     context.go('/post-job');
                     break;
@@ -53,6 +56,7 @@ class NavActions extends StatelessWidget {
                 }
               },
               itemBuilder: (context) => const [
+                PopupMenuItem(value: 'profile', child: Text('My Profile')),
                 PopupMenuItem(value: 'post', child: Text('Post Job')),
                 PopupMenuItem(value: 'apps', child: Text('My Applications')),
                 PopupMenuItem(value: 'quests', child: Text('My Quests')),

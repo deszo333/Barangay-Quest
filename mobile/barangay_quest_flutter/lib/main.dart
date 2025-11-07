@@ -13,6 +13,8 @@ import 'screens/post_job_screen.dart';
 import 'screens/my_applications_screen.dart';
 import 'screens/my_quests_screen.dart';
 import 'screens/quest_applicants_screen.dart';
+import 'screens/user_profile_screen.dart';
+import 'screens/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,8 +28,10 @@ class BarangayQuestApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final router = GoRouter(
-      initialLocation: '/',
+      initialLocation: '/splash',
       routes: [
+        GoRoute(
+            path: '/splash', builder: (context, state) => const SplashScreen()),
         GoRoute(path: '/', builder: (context, state) => const AuthGate()),
         GoRoute(
             path: '/login', builder: (context, state) => const LoginScreen()),
@@ -55,6 +59,11 @@ class BarangayQuestApp extends StatelessWidget {
           path: '/quest/:id/applicants',
           builder: (context, state) =>
               QuestApplicantsScreen(questId: state.pathParameters['id']!),
+        ),
+        GoRoute(
+          path: '/user/:id',
+          builder: (context, state) =>
+              UserProfileScreen(userId: state.pathParameters['id']!),
         ),
       ],
     );
