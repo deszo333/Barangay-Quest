@@ -36,7 +36,6 @@ class NavActions extends StatelessWidget {
             ),
             PopupMenuButton<String>(
               onSelected: (value) async {
-<<<<<<< HEAD
                 // Schedule navigation after the popup has closed to avoid
                 // ancestor lookups on a deactivated element (race condition).
                 // This ensures any Theme/PopupMenu lookup inside the popup
@@ -66,29 +65,8 @@ class NavActions extends StatelessWidget {
                       break;
                   }
                 });
-=======
-                switch (value) {
-                  case 'profile':
-                    context.push('/user/${user.uid}');
-                    break;
-                  case 'post':
-                    context.go('/post-job');
-                    break;
-                  case 'apps':
-                    context.go('/my-applications');
-                    break;
-                  case 'quests':
-                    context.go('/my-quests');
-                    break;
-                  case 'logout':
-                    await FirebaseAuth.instance.signOut();
-                    if (context.mounted) context.go('/login');
-                    break;
-                }
->>>>>>> 7231058dfd1423c83baefd468243f6648978788e
               },
               itemBuilder: (context) => const [
-                PopupMenuItem(value: 'profile', child: Text('My Profile')),
                 PopupMenuItem(value: 'post', child: Text('Post Job')),
                 PopupMenuItem(value: 'apps', child: Text('My Applications')),
                 PopupMenuItem(value: 'quests', child: Text('My Quests')),
