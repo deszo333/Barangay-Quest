@@ -57,7 +57,9 @@ class _SignupScreenState extends State<SignupScreen> {
         'avatarUrl': null,
         'createdAt': FieldValue.serverTimestamp(),
       });
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       context.go('/home');
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -68,10 +70,11 @@ class _SignupScreenState extends State<SignupScreen> {
         _error = 'Something went wrong. Please try again.';
       });
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
         });
+      }
     }
   }
 

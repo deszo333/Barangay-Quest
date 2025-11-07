@@ -36,21 +36,35 @@ class NavActions extends StatelessWidget {
             ),
             PopupMenuButton<String>(
               onSelected: (value) async {
-                switch (value) {
-                  case 'post':
-                    context.go('/post-job');
-                    break;
-                  case 'apps':
-                    context.go('/my-applications');
-                    break;
-                  case 'quests':
-                    context.go('/my-quests');
-                    break;
-                  case 'logout':
-                    await FirebaseAuth.instance.signOut();
-                    if (context.mounted) context.go('/login');
-                    break;
-                }
+                // Schedule navigation after the popup has closed to avoid
+                // ancestor lookups on a deactivated element (race condition).
+                // This ensures any Theme/PopupMenu lookup inside the popup
+                // finishes before we trigger route changes.
+                WidgetsBinding.instance.addPostFrameCallback((_) async {
+                  switch (value) {
+                    case 'post':
+                      if (context.mounted) {
+                        context.go('/post-job');
+                      }
+                      break;
+                    case 'apps':
+                      if (context.mounted) {
+                        context.go('/my-applications');
+                      }
+                      break;
+                    case 'quests':
+                      if (context.mounted) {
+                        context.go('/my-quests');
+                      }
+                      break;
+                    case 'logout':
+                      await FirebaseAuth.instance.signOut();
+                      if (context.mounted) {
+                        context.go('/login');
+                      }
+                      break;
+                  }
+                });
               },
               itemBuilder: (context) => const [
                 PopupMenuItem(value: 'post', child: Text('Post Job')),

@@ -41,7 +41,6 @@ export default function LoginPage() {
   return (
     <div className="auth-form-container">
       <Link to="/" className="auth-logo">
-        <span className="brand-badge">B</span>
         <span className="brand-text">Barangay Quest</span>
       </Link>
 

@@ -1,26 +1,14 @@
 import { NavLink, Link } from "react-router-dom";
 import "./Navbar.css"; // Use the restored Navbar.css
-// Import badge style
+// Import badge style (this link can be removed if AchievementsPage is deleted)
 import '../pages/AchievementsPage.css';
 
-// Badge Definitions
-const ACHIEVEMENT_BADGES = {
-    'seasoned_quester_2': '🌟', 'top_rated': '🏆', 'quest_giver_2': ' M',
-    'quest_initiator': '✍️', 'first_quest_completed': '👟',
-};
-// Helper function to get badge icons for a user
-function getUserBadges(user) {
-    if (!user || !user.unlockedAchievements) return [];
-    return user.unlockedAchievements
-        .filter(id => ACHIEVEMENT_BADGES[id])
-        .map(id => ({ id, icon: ACHIEVEMENT_BADGES[id] }));
-}
+// --- Badge logic completely removed ---
 
 export default function Navbar({ user, onLogoutClick }) {
-    const badges = getUserBadges(user); // Get badges for the logged-in user
+    // const badges = getUserBadges(user); // Removed
 
   return (
-    // Use the class defined in Navbar.css
     <header className="navbar">
       <div className="brand">
         <Link to="/" className="brand-link">Barangay <b>Quest</b></Link>
@@ -35,7 +23,8 @@ export default function Navbar({ user, onLogoutClick }) {
         {user && user.status === 'approved' && (
           <>
             <NavLink to="/post-job" className="nav-link">Post a Job</NavLink>
-            <NavLink to="/achievements" className="nav-link">Achievements</NavLink>
+            {/* Link to achievements removed */}
+            {/* <NavLink to="/achievements" className="nav-link">Achievements</NavLink> */}
           </>
         )}
       </nav>
@@ -44,19 +33,29 @@ export default function Navbar({ user, onLogoutClick }) {
         {user ? (
           // --- Logged In View ---
           <>
-            {/* Links only visible when logged in */}
             <NavLink to="/my-applications" className="nav-link" style={{padding: '8px 10px', marginRight: '5px'}}>My Applications</NavLink>
             <NavLink to="/my-quests" className="nav-link" style={{padding: '8px 10px', marginRight: '10px'}}>My Quests</NavLink>
-            <NavLink to="/settings" className="nav-link" style={{padding: '8px 10px', marginRight: '10px'}}>Settings</NavLink>
+            <NavLink to="/settings" className="nav-link" style={{padding: '8px 10px', marginRight: '10px'}}>
+              Profile
+            </NavLink>
 
-            {/* Display User Name with Badges */}
+            {/* Display Wallet Balance */}
+            <span style={{
+              marginRight: "1rem", 
+              fontWeight: "600", 
+              color: 'var(--status-completed)', // Green color
+              background: 'rgba(74, 222, 128, 0.1)',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              border: '1px solid rgba(74, 222, 128, 0.2)'
+            }}>
+              ₱{user.walletBalance?.toFixed(2) || '0.00'}
+            </span>
+
+            {/* Display User Name (Badges Removed) */}
             <span style={{marginRight: "12px", fontWeight: "600", color: 'var(--white)'}}>
               Hi, {user.name}!
-              {badges.map(badge => (
-                  <span key={badge.id} className="user-badge" title={badge.id.replace(/_/g, ' ')}>
-                      {badge.icon}
-                  </span>
-              ))}
+              {/* Badge map removed */}
             </span>
             <button type="button" className="btn ghost" onClick={onLogoutClick}> Log Out </button>
           </>

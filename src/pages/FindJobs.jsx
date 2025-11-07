@@ -1,8 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { GoogleMap, useLoadScript, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { db } from '../firebase';
 import { collection, query, getDocs, where, orderBy } from 'firebase/firestore';
 import QuestCard from '../components/QuestCard';
 import "./FindJobs.css";
+
+// !!! IMPORTANT: PASTE YOUR GOOGLE MAPS API KEY HERE !!!
+const GOOGLE_MAPS_API_KEY = "AIzaSyDBE8OWqa1pnm-6nyq4lxPK8TVlv_q7kFs"; // e.g., "AIzaSy..."
+
+const mapLibraries = ["places", "geocoding"];
+const mapCenter = { lat: 14.5995, lng: 120.9842 }; // Map center (Manila)
 
 // --- Default filter values ---
 const MAX_PRICE = 10000;
@@ -15,8 +23,12 @@ export default function FindJobs() {
   // --- Filter States ---
   const [jobType, setJobType] = useState('All');
   const [price, setPrice] = useState(MAX_PRICE); // Max price
-  const [rating, setRating] = useState(0); // 0 = Any
+  // const [rating, setRating] = useState(0); // <-- REMOVED
   const [sortBy, setSortBy] = useState(DEFAULT_SORT);
+
+  // --- Map-related state ---
+  const [showMap, setShowMap] = useState(false);
+  const [selectedQuest, setSelectedQuest] = useState(null); // For the InfoWindow
 
   // Fetch ALL quests from Firestore just once
   useEffect(() => {
@@ -56,16 +68,12 @@ export default function FindJobs() {
       quests = quests.filter(q => q.workType === jobType);
     }
 
-    // 2. Filter by Price (FIXED)
-    // Now filters all jobs with a budget less than or equal to the price
+    // 2. Filter by Price
     if (price < MAX_PRICE) {
       quests = quests.filter(q => Number(q.budgetAmount) <= price);
     }
     
-    // 3. Filter by Rating (Once we have real ratings)
-    // if (rating > 0) {
-    //   quests = quests.filter(q => q.rating >= rating);
-    // }
+    // 3. Filter by Rating (REMOVED)
 
     // 4. Sort the results
     quests.sort((a, b) => {
@@ -74,8 +82,8 @@ export default function FindJobs() {
           return Number(a.budgetAmount) - Number(b.budgetAmount);
         case 'price-desc':
           return Number(b.budgetAmount) - Number(a.budgetAmount);
-        case 'rating-desc':
-          return (b.rating || 0) - (a.rating || 0);
+        // case 'rating-desc': // <-- REMOVED
+        //   return (b.questGiverAvgRating || 0) - (a.questGiverAvgRating || 0);
         default: // createdAt-desc
           return (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0);
       }
@@ -83,15 +91,28 @@ export default function FindJobs() {
 
     return quests;
 
-  }, [allQuests, jobType, price, rating, sortBy]);
+  }, [allQuests, jobType, price, sortBy]); // <-- REMOVED 'rating'
 
   // --- NEW: Function to reset all filters ---
   const handleResetFilters = () => {
     setJobType('All');
     setPrice(MAX_PRICE);
-    setRating(0);
+    // setRating(0); // <-- REMOVED
     setSortBy(DEFAULT_SORT);
   };
+
+  // --- Load Google Maps Script ---
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: mapLibraries,
+  });
+
+  // --- Helper to format price for InfoWindow ---
+  const formatPrice = (type, amount) => {
+    const num = Number(amount).toFixed(2);
+    if (type === 'Hourly Rate') { return `₱${num} / hour`; }
+    return `₱${num} (Fixed)`;
+  }
 
   return (
     <div className="bq-container">
@@ -101,7 +122,6 @@ export default function FindJobs() {
         {/* === Left Sidebar (Filters) === */}
         <aside className="filter-sidebar">
           
-          {/* --- NEW: Reset Button --- */}
           <button 
             className="btn btn-secondary" 
             style={{width: '100%', background: 'var(--card)'}}
@@ -111,7 +131,6 @@ export default function FindJobs() {
           </button>
           
           <div className="filter-group">
-            {/* --- CHANGED Label --- */}
             <h3>Max Budget</h3>
             <label className="price-slider-label">
               <span>₱0</span>
@@ -128,10 +147,7 @@ export default function FindJobs() {
             />
           </div>
           
-          <div className="filter-group">
-            <h3>Rating</h3>
-            <RatingFilter rating={rating} setRating={setRating} />
-          </div>
+          {/* --- RATING FILTER GROUP REMOVED --- */}
 
           <div className="filter-group">
             <h3>Job Type</h3>
@@ -155,23 +171,28 @@ export default function FindJobs() {
           </div>
 
           <div className="filter-group">
-            <button className="btn btn-outline">Show Map</button>
-            <div className="map-placeholder">(Map goes here)</div>
+            <button 
+              className="btn btn-outline"
+              onClick={() => setShowMap(!showMap)}
+            >
+              {showMap ? "Show List View" : "Show Map"}
+            </button>
+            {/* Remove placeholder, no longer needed here */}
           </div>
         </aside>
 
         {/* === Right Panel (Results) === */}
         <main className="results-panel">
           <div className="results-header">
-            <h2>Find Results ({filteredQuests.length})</h2>
+            <h2>{showMap ? "Map View" : `Find Results (${filteredQuests.length})`}</h2>
             <select 
               className="form-select" 
-              style={{width: '200px', background: 'var(--bg-2)'}} // Added bg
+              style={{width: '200px', background: 'var(--bg-2)'}}
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
             >
               <option value="createdAt-desc">Sort by: Newest</option>
-              <option value="rating-desc">Sort by: Rating (High-Low)</option>
+              {/* <option value="rating-desc">Sort by: Rating (High-Low)</option> */} {/* <-- REMOVED */}
               <option value="price-desc">Sort by: Price (High-Low)</option>
               <option value="price-asc">Sort by: Price (Low-High)</option>
             </select>
@@ -179,40 +200,67 @@ export default function FindJobs() {
 
           {loading && <p>Loading quests...</p>}
 
-          {!loading && filteredQuests.length === 0 && (
-            <p>No quests found matching your criteria.</p>
+          {/* --- Map View --- */}
+          {showMap && (
+            <div className="map-container">
+              {!isLoaded && <p>Loading Map...</p>}
+              {loadError && <p>Error loading map.</p>}
+              
+              {isLoaded && !loadError && (
+                <GoogleMap
+                  mapContainerStyle={{ width: '100%', height: '100%' }}
+                  zoom={11}
+                  center={mapCenter}
+                >
+                  {filteredQuests.map(quest => (
+                    quest.location?.lat && (
+                      <MarkerF
+                        key={quest.id}
+                        position={{ lat: quest.location.lat, lng: quest.location.lng }}
+                        onClick={() => setSelectedQuest(quest)}
+                      />
+                    )
+                  ))}
+
+                  {selectedQuest && (
+                    <InfoWindowF
+                      position={{ lat: selectedQuest.location.lat, lng: selectedQuest.location.lng }}
+                      onCloseClick={() => setSelectedQuest(null)}
+                    >
+                      <div className="info-window-content">
+                        <h4>{selectedQuest.title}</h4>
+                        <p>{formatPrice(selectedQuest.budgetType, selectedQuest.budgetAmount)}</p>
+                        <Link to={`/quest/${selectedQuest.id}`}>
+                          View Quest
+                        </Link>
+                      </div>
+                    </InfoWindowF>
+                  )}
+                </GoogleMap>
+              )}
+            </div>
+          )}
+          {/* --- END MAP VIEW --- */}
+
+
+          {/* --- Conditional List View --- */}
+          {!showMap && (
+            <>
+              {!loading && filteredQuests.length === 0 && (
+                <p>No quests found matching your criteria.</p>
+              )}
+              <div className="results-grid">
+                {!loading && filteredQuests.map(quest => (
+                  <QuestCard key={quest.id} quest={quest} />
+                ))}
+              </div>
+            </>
           )}
 
-          <div className="results-grid">
-            {!loading && filteredQuests.map(quest => (
-              <QuestCard key={quest.id} quest={quest} />
-            ))}
-          </div>
         </main>
       </div>
     </div>
   );
 }
 
-// --- Helper component for Star Rating Filter ---
-function RatingFilter({ rating, setRating }) {
-  return (
-    <div className="rating-group">
-      {[1, 2, 3, 4, 5].map(star => (
-        <span 
-          key={star} 
-          className={`star ${rating >= star ? 'active' : ''}`}
-          onClick={() => setRating(star === rating ? 0 : star)} // Click again to clear
-        >
-          ★
-        </span>
-      ))}
-      <span 
-        style={{fontSize: '0.9rem', marginLeft: '0.5rem', cursor: 'pointer'}}
-        onClick={() => setRating(0)}
-      >
-        (Any)
-      </span>
-    </div>
-  );
-}
+// --- RATING FILTER COMPONENT REMOVED ---

@@ -114,17 +114,20 @@ class _PostJobScreenState extends State<PostJobScreen> {
         });
       });
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       context.go('/my-quests');
     } catch (e) {
       setState(() {
         _error = 'Failed to post job. Please try again.';
       });
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
         });
+      }
     }
   }
 
@@ -202,16 +205,19 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   icon: const Icon(Icons.photo),
                   label: const Text('Select image')),
               const SizedBox(width: 12),
-              if (_imageBytes != null) const Text('Image selected')
+              _imageBytes != null ? const Text('Image selected') : const SizedBox.shrink(),
             ]),
-            if (_imageBytes != null) ...[
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child:
-                    Image.memory(_imageBytes!, height: 160, fit: BoxFit.cover),
-              )
-            ],
+            _imageBytes != null
+                ? Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.memory(_imageBytes!, height: 160, fit: BoxFit.cover),
+                      )
+                    ],
+                  )
+                : const SizedBox.shrink(),
             const SizedBox(height: 12),
             Row(children: [
               Checkbox(

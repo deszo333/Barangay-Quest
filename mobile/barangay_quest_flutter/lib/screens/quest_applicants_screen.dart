@@ -108,7 +108,9 @@ class _QuestApplicantsScreenState extends State<QuestApplicantsScreen> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return const _AuthRequired();
+    if (user == null) {
+      return const _AuthRequired();
+    }
 
     return Scaffold(
       appBar: AppBar(

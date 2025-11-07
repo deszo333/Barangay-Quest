@@ -25,8 +25,6 @@ class AppTheme {
       surfaceContainerLow: bg2,
       surfaceContainerLowest: bg2,
       onSurface: white,
-      background: bg,
-      onBackground: white,
       outline: Color(0xFF274A60),
       outlineVariant: card,
       scrim: Colors.black54,
@@ -52,7 +50,7 @@ class AppTheme {
           color: white,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: bg2,
         elevation: 0,
         margin: EdgeInsets.zero,
@@ -75,13 +73,14 @@ class AppTheme {
             textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           foregroundColor: WidgetStateProperty.all(const Color(0xFF052130)),
-          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return accent.withOpacity(.5);
+              // Avoid deprecated withOpacity by using withAlpha
+              return accent.withAlpha((0.5 * 255).round());
             }
             return accent;
           }),
-          overlayColor: WidgetStateProperty.all(Colors.white.withOpacity(.08)),
+          overlayColor: WidgetStateProperty.all(Colors.white.withAlpha((0.08 * 255).round())),
           shape: WidgetStateProperty.all(
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),

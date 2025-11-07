@@ -9,7 +9,9 @@ class MyApplicationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return const _AuthRequired();
+    if (user == null) {
+      return const _AuthRequired();
+    }
     final stream = FirebaseFirestore.instance
         .collection('applications')
         .where('applicantId', isEqualTo: user.uid)
@@ -30,10 +32,13 @@ class MyApplicationsScreen extends StatelessWidget {
           if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snap.hasError) return Center(child: Text('Error: ${snap.error}'));
+          if (snap.hasError) {
+            return Center(child: Text('Error: ${snap.error}'));
+          }
           final docs = snap.data?.docs ?? [];
-          if (docs.isEmpty)
+          if (docs.isEmpty) {
             return const Center(child: Text('No applications yet.'));
+          }
           return ListView.separated(
             padding: const EdgeInsets.all(12),
             itemCount: docs.length,
@@ -45,8 +50,7 @@ class MyApplicationsScreen extends StatelessWidget {
               final applicantDone = (d['applicantDone'] ?? false) == true;
               return ListTile(
                 title: Text(d['questTitle'] ?? 'Quest'),
-                subtitle: Text('Status: $status' +
-                    (applicantDone ? ' • You marked done' : '')),
+                subtitle: Text('Status: $status${applicantDone ? ' • You marked done' : ''}'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

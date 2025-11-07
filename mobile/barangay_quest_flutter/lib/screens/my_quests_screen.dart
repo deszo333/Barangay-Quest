@@ -9,7 +9,9 @@ class MyQuestsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return const _AuthRequired();
+    if (user == null) {
+      return const _AuthRequired();
+    }
     final stream = FirebaseFirestore.instance
         .collection('quests')
         .where('questGiverId', isEqualTo: user.uid)
@@ -30,10 +32,13 @@ class MyQuestsScreen extends StatelessWidget {
           if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snap.hasError) return Center(child: Text('Error: ${snap.error}'));
+          if (snap.hasError) {
+            return Center(child: Text('Error: ${snap.error}'));
+          }
           final docs = snap.data?.docs ?? [];
-          if (docs.isEmpty)
+          if (docs.isEmpty) {
             return const Center(child: Text('No quests posted yet.'));
+          }
           return ListView.separated(
             padding: const EdgeInsets.all(12),
             itemCount: docs.length,

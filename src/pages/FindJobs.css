@@ -69,7 +69,7 @@
   color: var(--white);
 }
 
-/* --- NEW: Style for Sort By dropdown --- */
+/* --- Style for Sort By dropdown --- */
 .results-header .form-select {
   background: var(--bg-2);
   border: 1px solid var(--card);
@@ -88,8 +88,6 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(31, 182, 255, .2);
 }
-/* --- End new block --- */
-
 
 .results-grid {
   display: grid;
@@ -203,7 +201,7 @@
   color: var(--white);
 }
 
-/* --- Add this to the bottom of FindJobs.css --- */
+/* --- Radio/Checkbox Styles --- */
 
 .filter-group ul {
   list-style: none;
@@ -247,20 +245,37 @@
   accent-color: var(--accent);
 }
 
-.rating-group {
-  display: flex;
-  gap: 0.25rem;
+/* --- RATING STYLES REMOVED --- */
+
+
+/* --- NEW STYLES FOR MAP --- */
+.map-container {
+  width: 100%;
+  height: 70vh; /* Give the map a large, fixed height */
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--card);
+}
+
+.info-window-content {
+  background-color: var(--bg-2); /* Use a dark bg for the info box */
+  color: var(--white);
+  padding: 0.5rem;
+}
+.info-window-content h4 {
+  margin: 0 0 0.5rem;
+  color: var(--white);
+}
+.info-window-content p {
+  margin: 0 0 0.75rem;
   color: var(--muted);
-  font-size: 1.5rem;
 }
-.rating-group .star {
-  cursor: pointer;
-  transition: all 0.15s ease; /* Added transition */
+/* Style the link inside the info window */
+.info-window-content a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
 }
-.rating-group .star.active {
-  color: #ffd166;
-}
-.rating-group .star:not(.active):hover {
-  color: #fde047; /* Lighter yellow */
-  transform: scale(1.1);
+.info-window-content a:hover {
+  text-decoration: underline;
 }

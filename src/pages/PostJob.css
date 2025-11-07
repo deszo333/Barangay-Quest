@@ -143,7 +143,7 @@
 .form-group {
   display: grid;
   gap: 0.5rem;
-  align-content: start; /* <-- ADD THIS LINE */
+  align-content: start;
 }
 
 .form-group label {
@@ -182,11 +182,7 @@
   resize: vertical;
 }
 
-.form-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
+/* --- REMOVED: .form-grid-2 is no longer used here --- */
 
 /* Toggle Switch (for Remote/In-Person) */
 .form-toggle {
@@ -215,29 +211,19 @@
   box-shadow: var(--shadow);
 }
 
-/* Radio Group (for Budget) */
-.form-radio-group {
-  display: grid;
-  gap: 0.75rem;
+/* --- REMOVED: .budget-inputs styles are gone --- */
+
+/* Remove ugly number input arrows (now targets the general input) */
+.form-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
-.form-radio-group label {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: #0f2b3b;
-  border: 1px solid #20455b;
-  padding: 12px 14px;
-  border-radius: 10px;
-  cursor: pointer;
+.form-input[type="number"]::-webkit-outer-spin-button,
+.form-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
-.form-radio-group input {
-  accent-color: var(--accent);
-}
-.form-radio-group .budget-input {
-  background: var(--bg);
-  flex-basis: 120px;
-  margin-left: auto;
-}
+
 
 /* File Upload */
 .form-upload {
@@ -279,8 +265,7 @@
   margin-left: auto;
 }
 
-/* --- Add this to the bottom of PostJob.css --- */
-
+/* --- File Input Styles --- */
 .form-group-upload {
   display: grid;
   gap: 0.5rem;
@@ -307,4 +292,16 @@
 
 .form-file-input::file-selector-button:hover {
   background: #1c394c;
+}
+
+/* --- Dark Mode Date Picker --- */
+.form-input[type="date"] {
+  color-scheme: dark;
+  /* Override default padding for date input */
+  padding: 11px 14px; 
+}
+/* Style the calendar icon */
+.form-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1); /* Makes the white calendar icon visible on dark bg */
+  cursor: pointer;
 }

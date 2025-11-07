@@ -35,7 +35,9 @@ class _LoginScreenState extends State<LoginScreen> {
         email: email,
         password: password,
       );
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       context.go('/home');
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -46,10 +48,11 @@ class _LoginScreenState extends State<LoginScreen> {
         _error = 'Something went wrong. Please try again.';
       });
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
         });
+      }
     }
   }
 

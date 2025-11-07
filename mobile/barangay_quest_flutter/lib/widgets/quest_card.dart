@@ -11,20 +11,30 @@ class QuestCard extends StatelessWidget {
 
   String _formatBudget() {
     final amount = quest.budgetAmount.toString();
-    if (quest.budgetType == 'Hourly Rate') return '₱$amount / hr';
+    if (quest.budgetType == 'Hourly Rate') {
+      return '₱$amount / hr';
+    }
     return '₱$amount (Fixed)';
   }
 
   String _formatWhen() {
     final ts = quest.createdAt;
-    if (ts == null) return 'Just now';
+    if (ts == null) {
+      return 'Just now';
+    }
     final dt = ts.toDate();
     final seconds = DateTime.now().difference(dt).inSeconds;
-    if (seconds < 60) return 'Just now';
+    if (seconds < 60) {
+      return 'Just now';
+    }
     final minutes = seconds ~/ 60;
-    if (minutes < 60) return '$minutes min ago';
+    if (minutes < 60) {
+      return '$minutes min ago';
+    }
     final hours = minutes ~/ 60;
-    if (hours < 24) return '$hours hr ago';
+    if (hours < 24) {
+      return '$hours hr ago';
+    }
     final days = hours ~/ 24;
     return '$days day${days == 1 ? '' : 's'} ago';
   }
@@ -61,7 +71,7 @@ class QuestCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: bg.withOpacity(0.6)),
+  border: Border.all(color: bg.withAlpha((0.6 * 255).round())),
       ),
       child: Text(
         status.replaceAll('_', '-'),

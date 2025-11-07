@@ -20,8 +20,8 @@ import QuestDetailPage from "./pages/QuestDetailPage.jsx";
 import MyApplications from "./pages/MyApplications.jsx";
 import MyQuests from "./pages/MyQuests.jsx";
 import UserProfilePage from "./pages/UserProfilePage.jsx";
-import AchievementsPage from "./pages/AchievementsPage.jsx";
-import ProfileSettingsPage from "./pages/ProfileSettingsPage.jsx";
+// import AchievementsPage from "./pages/AchievementsPage.jsx"; // Removed
+import ProfilePage from "./pages/ProfilePage.jsx";
 
 // Main App Component
 export default function App() {
@@ -33,9 +33,27 @@ export default function App() {
       if (firebaseUser) {
         const userDocRef = doc(db, "users", firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) { setUser({ uid: firebaseUser.uid, email: firebaseUser.email, ...userDoc.data() }); }
-        else { setUser({ uid: firebaseUser.uid, email: firebaseUser.email, name: "User", status: "pending", unlockedAchievements: [], questsCompleted: 0, questsPosted: 0, questsGivenCompleted: 0, totalRatingScore: 0, numberOfRatings: 0, avatarUrl: null }); }
-      } else { setUser(null); }
+        if (userDoc.exists()) { 
+          setUser({ uid: firebaseUser.uid, email: firebaseUser.email, ...userDoc.data() }); 
+        } else { 
+          // Default object for a user that exists in Auth but not Firestore (shouldn't happen in normal flow)
+          setUser({ 
+            uid: firebaseUser.uid, 
+            email: firebaseUser.email, 
+            name: "User", 
+            status: "pending", 
+            questsCompleted: 0, 
+            questsPosted: 0, 
+            questsGivenCompleted: 0, 
+            totalRatingScore: 0, 
+            numberOfRatings: 0, 
+            avatarUrl: null, 
+            walletBalance: 0 
+          }); 
+        }
+      } else { 
+        setUser(null); 
+      }
       setLoading(false);
     });
     return () => unsubscribe();
@@ -60,8 +78,8 @@ export default function App() {
             <Route path="my-applications" element={<MyApplications />} />
             <Route path="my-quests" element={<MyQuests />} />
             <Route path="profile/:userId" element={<UserProfilePage />} />
-            <Route path="achievements" element={<AchievementsPage />} />
-            <Route path="settings" element={<ProfileSettingsPage />} />
+            {/* <Route path="achievements" element={<AchievementsPage />} /> */} {/* Removed */}
+            <Route path="settings" element={<ProfilePage />} />
           </Route>
 
           {/* Pending */}
@@ -89,7 +107,6 @@ function Layout({ user, setUser }) {
   return (
     <>
       <Navbar user={user} onLogoutClick={handleLogout} />
-      {/* Wrap Outlet in main for sticky footer */}
       <main className="main-content-area">
         <Outlet context={{ user, setUser }} />
       </main>
@@ -103,7 +120,7 @@ function Footer() {
   return (
     <footer className="bq-footer">
       <div className="bq-container footer-top">
-        <a href="#" className="brand brand-footer"> <span className="brand-badge">B</span> <span className="brand-text">Barangay Quest</span> </a>
+        <a href="#" className="brand brand-footer"> <span className="brand-text">Barangay Quest</span> </a>
         <div className="footer-links"> <a href="#">About Us</a> <a href="#">Contact</a> <a href="#">Privacy</a> </div>
         <div className="socials"> <a aria-label="Facebook" href="#" className="soc fb">f</a> <a aria-label="Twitter/X" href="#" className="soc tw">t</a> <a aria-label="Instagram" href="#" className="soc ig">i</a> </div>
       </div>

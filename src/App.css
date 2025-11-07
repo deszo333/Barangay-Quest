@@ -21,6 +21,7 @@
   --status-completed:#4ade80;
   --status-rejected:#f87171;
   --status-pending:#fbbf24;
+  --status-paused: #64748b; /* --- NEW: Added paused color --- */
 }
 
 

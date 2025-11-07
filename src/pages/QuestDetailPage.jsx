@@ -20,7 +20,6 @@ function formatPrice(type, amount) {
 // --- ADDED MISSING formatDate HELPER ---
 function formatDate(timestamp) {
   if (!timestamp) return "";
-  // Simplified time ago logic - Can be made more robust later
   const seconds = Math.floor((new Date() - timestamp.toDate()) / 1000);
   let interval = seconds / 86400; // Days
   if (interval > 1) return timestamp.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); // Show date if > 1 day
@@ -30,7 +29,6 @@ function formatDate(timestamp) {
   if (interval > 1) return Math.floor(interval) + " minutes ago";
   return "Just now";
 }
-// --- END HELPER ---
 
 export default function QuestDetailPage() {
   const { id } = useParams();
@@ -145,17 +143,28 @@ export default function QuestDetailPage() {
   return (
     <div className="bq-container" style={{padding: "2rem", display: 'grid', gap: '1rem'}}>
       <h1>{quest.title}</h1>
-      <p style={{marginTop: '-1rem', color: 'var(--muted)'}}>
-        Posted by {quest.questGiverName} • {formatDate(quest.createdAt)} {/* <-- Now uses formatDate */}
+      <p style={{marginTop: '-1rem', color: 'var(--muted)', fontSize: '1.1rem'}}>
+        Posted by {quest.questGiverName} • {formatDate(quest.createdAt)}
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-        <div><strong>Category:</strong> {quest.category}</div>
-        <div><strong>Status:</strong> <span className={`app-status ${quest.status}`} style={{textTransform: 'capitalize'}}>{quest.status}</span></div>
-        <div><strong>Location:</strong> {quest.location?.address || quest.workType}</div>
-        <div><strong>Budget:</strong> {formatPrice(quest.budgetType, quest.budgetAmount)}</div>
-        {quest.schedule && <div><strong>Schedule:</strong> {quest.schedule}</div>}
+      {/* --- UPDATED: This is now a 2-column grid that stacks cleanly --- */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+        gap: '1rem',
+        background: 'var(--bg-2)',
+        padding: '1.5rem',
+        borderRadius: 'var(--radius)',
+        border: '1px solid var(--card)'
+      }}>
+        <div><strong>Category:</strong><br/> {quest.category}</div>
+        <div><strong>Status:</strong><br/> <span className={`app-status ${quest.status}`} style={{textTransform: 'capitalize'}}>{quest.status}</span></div>
+        <div><strong>Location:</strong><br/> {quest.location?.address || quest.workType}</div>
+        <div><strong>Schedule:</strong><br/> {quest.schedule}</div>
+        <div><strong>Engagement:</strong><br/> {quest.engagement || 'One-Time'}</div>
+        <div><strong>Budget:</strong><br/> {formatPrice(quest.budgetType, quest.budgetAmount)}</div>
       </div>
+      {/* --- END UPDATED --- */}
 
 
       {quest.imageUrl && (

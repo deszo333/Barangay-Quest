@@ -5,12 +5,12 @@ import { db } from '../firebase';
 import {
     collection, query, where, getDocs, orderBy, doc, updateDoc,
     writeBatch, limit, getDoc, deleteDoc, getCountFromServer,
-    runTransaction, FieldValue, increment, serverTimestamp, arrayUnion
+    runTransaction, FieldValue, increment, serverTimestamp
 } from 'firebase/firestore';
 import StarRatingInput from '../components/StarRatingInput';
 import "./MyQuests.css";
 import "../pages/Home.css";
-import '../pages/AchievementsPage.css'; // Import badge style
+// achievements css removed
 
 // Helper to get user context
 function useUser() {
@@ -28,62 +28,43 @@ function formatDate(timestamp) {
   return "today";
 }
 
-// Badge Definitions
-const ACHIEVEMENT_BADGES = {
-    'seasoned_quester_2': 'ЁЯМЯ',
-    'top_rated': 'ЁЯПЖ',
-    'quest_giver_2': ' M' // Placeholder
-};
-function getUserBadges(user) {
-    if (!user || !user.unlockedAchievements) return [];
-    return user.unlockedAchievements.filter(id => ACHIEVEMENT_BADGES[id]).map(id => ({ id, icon: ACHIEVEMENT_BADGES[id] }));
-}
-
-// --- ApplicantItem Component ---
+// --- ApplicantItem Component (Simplified) ---
 function ApplicantItem({ application, onHire, onReject }) {
-  // --- CORRECTED useState line ---
-  const [applicantData, setApplicantData] = useState(null); // State for full applicant data
+  const [applicantData, setApplicantData] = useState(null); 
 
-  // Fetch applicant's full data (including rating and achievements)
   useEffect(() => {
     const fetchApplicantData = async () => {
       if (!application.applicantId) return;
-      setApplicantData(null); // Reset on ID change
+      setApplicantData(null); 
       try {
         const userDocRef = doc(db, "users", application.applicantId);
         const userDocSnap = await getDoc(userDocRef);
         if (userDocSnap.exists()) {
-          setApplicantData(userDocSnap.data()); // Store all data
+          setApplicantData(userDocSnap.data()); 
         } else {
             console.warn(`Applicant profile not found for ID: ${application.applicantId}`);
-            setApplicantData(null); // Keep null if not found
+            setApplicantData(null); 
         }
       } catch (err) {
         console.error("Error fetching applicant data:", err);
-        setApplicantData(null); // Keep null on error
+        setApplicantData(null); 
       }
     };
     fetchApplicantData();
   }, [application.applicantId]);
 
-  // Calculate average rating
   const avgRating = applicantData && applicantData.numberOfRatings > 0
     ? (applicantData.totalRatingScore / applicantData.numberOfRatings).toFixed(1)
     : 'N/A';
   const ratingCount = applicantData?.numberOfRatings || 0;
-  const badges = getUserBadges(applicantData); // Get badges from the fetched data
 
   return (
     <div className="applicant-item">
       <div className="applicant-info">
-        <img src={`https://ui-avatars.com/api/?name=${application.applicantName}&background=random`} alt={application.applicantName} className="applicant-avatar" />
+        <img src={applicantData?.avatarUrl || `https://ui-avatars.com/api/?name=${application.applicantName}&background=random`} alt={application.applicantName} className="applicant-avatar" />
         <div>
             <Link to={`/profile/${application.applicantId}`} className="applicant-name">
               {application.applicantName}
-              {/* Display Badges */}
-              {badges.map(badge => (
-                  <span key={badge.id} className="user-badge" title={badge.id.replace(/_/g, ' ')}> {badge.icon} </span>
-              ))}
             </Link>
             <div style={{fontSize: '0.8rem', color: 'var(--muted)', marginTop: '2px'}}>
                 ⭐ {avgRating} ({ratingCount} ratings)
@@ -98,8 +79,8 @@ function ApplicantItem({ application, onHire, onReject }) {
   );
 }
 
-// --- PostedQuestItem Component ---
-function PostedQuestItem({ quest, onHireApplicant, onRejectApplicant, onMarkComplete, onDeleteQuest, onRateQuester }) {
+// --- PostedQuestItem Component (Simplified) ---
+function PostedQuestItem({ quest, onHireApplicant, onRejectApplicant, onMarkComplete, onDeleteQuest, onRateQuester, onTogglePause, onCancelHired }) { // <-- Added onCancelHired
   const [showApplicants, setShowApplicants] = useState(false);
   const [applicants, setApplicants] = useState([]);
   const [applicantCount, setApplicantCount] = useState(0);
@@ -130,7 +111,10 @@ function PostedQuestItem({ quest, onHireApplicant, onRejectApplicant, onMarkComp
         try {
           const userDocRef = doc(db, "users", quest.hiredApplicantId);
           const userDocSnap = await getDoc(userDocRef);
-          if (userDocSnap.exists()) { setHiredApplicantInfo({ name: userDocSnap.data().name, phone: userDocSnap.data().phone }); }
+          if (userDocSnap.exists()) { 
+            const data = userDocSnap.data();
+            setHiredApplicantInfo({ name: data.name, phone: data.phone, avatarUrl: data.avatarUrl }); 
+          }
           else { setHiredApplicantInfo({ name: "Unknown User", phone: "N/A" }); }
         } catch (error) { console.error("Error fetching hired applicant info:", error); setHiredApplicantInfo({ name: "Error", phone: "N/A" }); }
       } else { setHiredApplicantInfo(null); }
@@ -172,15 +156,33 @@ function PostedQuestItem({ quest, onHireApplicant, onRejectApplicant, onMarkComp
       <div className="quest-item-header">
         <div className="quest-item-details">
           <h3>{quest.title}</h3>
-          <p>{quest.location?.address || quest.workType} тАв {formatDate(quest.createdAt)}</p>
+          <p>{quest.location?.address || quest.workType} • {formatDate(quest.createdAt)}</p>
           <p style={{ marginTop: '5px', fontWeight: '600', textTransform: 'capitalize' }} className={`app-status ${quest.status || 'open'}`}> Status: {quest.status || 'Open'} </p>
         </div>
         <div className="quest-item-actions">
-           {quest.status === 'open' && <button className="btn btn-secondary">Pause</button>}
-           {quest.status !== 'completed' && quest.status !== 'archived' && <button className="btn btn-outline">Edit</button>}
-           {/* --- MODIFIED LINE --- */}
-           {quest.status === 'in-progress' && ( <button className="btn btn-primary" onClick={() => onMarkComplete(quest.id, quest.hiredApplicantId, quest.hiredApplicationData?.id)} > Mark Complete </button> )}
-           {quest.status === 'open' && ( <button className="btn btn-danger" onClick={() => onDeleteQuest(quest.id)} > Delete </button> )}
+           {(quest.status === 'open' || quest.status === 'paused') && (
+            <button className="btn btn-secondary" onClick={() => onTogglePause(quest.id, quest.status)}>
+              {quest.status === 'open' ? 'Pause' : 'Unpause'}
+            </button>
+           )}
+           
+           {/* Show "Cancel" or "Mark Complete" */}
+           {quest.status === 'in-progress' && ( 
+            <>
+              <button className="btn btn-danger" onClick={() => onCancelHired(quest.id, quest.hiredApplicationData?.id, quest.escrowAmount, quest.hiredApplicantId)}>
+                Cancel & Refund
+              </button>
+              <button className="btn btn-primary" onClick={() => onMarkComplete(quest.id, quest.hiredApplicantId, quest.hiredApplicationData?.id)} > 
+                Mark Complete 
+              </button> 
+            </>
+           )}
+
+           {(quest.status === 'open' || quest.status === 'paused') && ( // Only show Delete if it's open or paused
+             <button className="btn btn-danger" onClick={() => onDeleteQuest(quest.id)} > 
+              Delete 
+             </button> 
+           )}
         </div>
       </div>
       <div>
@@ -210,7 +212,7 @@ function PostedQuestItem({ quest, onHireApplicant, onRejectApplicant, onMarkComp
 
 // --- MAIN PAGE COMPONENT ---
 export default function MyQuests() {
-  const { user } = useUser();
+  const { user, setUser } = useOutletContext(); // Get user and setUser
   const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('Active');
@@ -227,21 +229,34 @@ export default function MyQuests() {
       const querySnapshot = await getDocs(q);
       const questsDataPromises = querySnapshot.docs.map(async (questDoc) => {
         const questData = { id: questDoc.id, ...questDoc.data() };
-        if (questData.status === 'completed' && questData.hiredApplicantId) {
-          const appQuery = query( collection(db, "applications"), where("questId", "==", questData.id), where("applicantId", "==", questData.hiredApplicantId), limit(1) );
+
+        // Fetch app data if 'in-progress' OR 'completed'
+        if ((questData.status === 'in-progress' || questData.status === 'completed') && questData.hiredApplicantId) {
+          const appQuery = query( 
+            collection(db, "applications"), 
+            where("questId", "==", questData.id), 
+            where("applicantId", "==", questData.hiredApplicantId), 
+            where("status", "in", ["hired", "completed"]), 
+            limit(1) 
+          );
           const appSnapshot = await getDocs(appQuery);
-          if (!appSnapshot.empty) { questData.hiredApplicationData = { id: appSnapshot.docs[0].id, ...appSnapshot.docs[0].data() }; }
-           else { questData.hiredApplicationData = null; }
-        } else { questData.hiredApplicationData = null; }
+          if (!appSnapshot.empty) { 
+            questData.hiredApplicationData = { id: appSnapshot.docs[0].id, ...appSnapshot.docs[0].data() }; 
+          } else { 
+            console.warn("Could not find hired application for quest:", questData.id);
+            questData.hiredApplicationData = null; 
+          }
+        } else { 
+          questData.hiredApplicationData = null; 
+        }
         return questData;
       });
+
       const questsData = await Promise.all(questsDataPromises);
       setQuests(questsData);
     } catch (err) {
       console.error("Error fetching quests:", err);
       if (err.code === 'failed-precondition') {
-           console.error("Firestore index missing for MyQuests:", err);
-           console.log("Create index here:", `https://console.firebase.google.com/v1/r/project/${db.app.options.projectId}/firestore/indexes?create_composite=ClVwcm9qZWN0cy9iYXJhbmdheS1xdWVzdC9kYXRhYmFzZXMvKGRlZmF1bHQpL2NvbGxlY3Rpb25Hcm91cHMvcXVlc3RzL2luZGV4ZXMvXxABGhAKDHJlc3RBcG9Vc2VyEAEaDQoJY3JlYXRlZEF0EAIaDAoIX19uYW1lX18QAg`);
            setError("Database index is missing or building...");
       } else { setError("Could not load your quests."); }
     } finally { setLoading(false); }
@@ -253,7 +268,12 @@ export default function MyQuests() {
     let questStatus = 'open';
     if (filter === 'Completed') questStatus = 'completed';
     if (filter === 'Archived') questStatus = 'archived';
-    if (filter === 'Active') { return quests.filter(q => q.status === 'open' || q.status === 'in-progress'); }
+    
+    // "Active" tab now includes "paused"
+    if (filter === 'Active') { 
+      return quests.filter(q => q.status === 'open' || q.status === 'in-progress' || q.status === 'paused'); 
+    }
+    
     return quests.filter(q => q.status === questStatus);
   }, [quests, filter]);
 
@@ -277,17 +297,73 @@ export default function MyQuests() {
   }, [quests, user]);
 
 
-  // Action Handlers
+  // handleHireApplicant (Escrow Logic)
   const handleHireApplicant = async (questId, applicationId, applicantId) => {
-    setActionMessage("Processing hiring...");
+    setActionMessage("Processing hire...");
+    
+    const questToHire = quests.find(q => q.id === questId);
+    if (!questToHire) {
+      setActionMessage("Error: Quest not found.");
+      return;
+    }
+    const budgetAmount = Number(questToHire.budgetAmount);
+
+    if (!budgetAmount || budgetAmount <= 0) {
+      setActionMessage("Error: Quest has an invalid budget.");
+      return;
+    }
+    if ((user.walletBalance || 0) < budgetAmount) {
+      setActionMessage("Error: Insufficient funds. Please add credits to your profile.");
+      return;
+    }
+
     try {
-      const batch = writeBatch(db); const appRef = doc(db, "applications", applicationId); batch.update(appRef, { status: "hired" });
-      const questRef = doc(db, "quests", questId); batch.update(questRef, { status: "in-progress", hiredApplicantId: applicantId });
+      await runTransaction(db, async (transaction) => {
+        const questRef = doc(db, "quests", questId);
+        const giverRef = doc(db, "users", user.uid);
+        const appRef = doc(db, "applications", applicationId);
+
+        const giverSnap = await transaction.get(giverRef);
+        if (!giverSnap.exists()) { throw new Error("Your user profile not found."); }
+        
+        const giverData = giverSnap.data();
+        if ((giverData.walletBalance || 0) < budgetAmount) {
+          throw new Error("Insufficient funds. Please add credits to your profile.");
+        }
+
+        transaction.update(giverRef, {
+          walletBalance: increment(-budgetAmount) 
+        });
+        
+        transaction.update(questRef, { 
+          status: "in-progress", 
+          hiredApplicantId: applicantId,
+          escrowAmount: budgetAmount
+        });
+        
+        transaction.update(appRef, { status: "hired" });
+      });
+
+      const batch = writeBatch(db);
       const otherAppsQuery = query( collection(db, "applications"), where("questId", "==", questId), where("status", "==", "pending") );
-      const otherAppsSnapshot = await getDocs(otherAppsQuery); otherAppsSnapshot.forEach(appDoc => { if (appDoc.id !== applicationId) { batch.update(appDoc.ref, { status: "rejected" }); } });
-      await batch.commit(); setActionMessage("Applicant hired successfully!"); fetchQuests();
-    } catch (err) { console.error("Error hiring applicant:", err); setActionMessage("Error hiring applicant."); }
+      const otherAppsSnapshot = await getDocs(otherAppsQuery); 
+      otherAppsSnapshot.forEach(appDoc => { 
+        if (appDoc.id !== applicationId) { 
+          batch.update(appDoc.ref, { status: "rejected" }); 
+        } 
+      });
+      await batch.commit(); 
+      
+      setUser(prevUser => ({ ...prevUser, walletBalance: (prevUser.walletBalance || 0) - budgetAmount }));
+      setActionMessage("Applicant hired and funds are in escrow!"); 
+      fetchQuests();
+
+    } catch (err) { 
+      console.error("Error hiring applicant:", err); 
+      setActionMessage(`Error: ${err.message}`);
+    }
   };
+
   const handleRejectApplicant = async (applicationId) => {
     setActionMessage(`Rejecting application ${applicationId}...`);
     try {
@@ -296,114 +372,80 @@ export default function MyQuests() {
     } catch (err) { console.error("Error rejecting applicant:", err); setActionMessage("Error rejecting applicant."); }
   };
   
-  // --- REPLACED/FIXED FUNCTION ---
+  // handleMarkComplete (Payout Logic)
   const handleMarkComplete = async (questId, hiredApplicantId, hiredApplicationId) => {
     setActionMessage(`Completing quest ${questId}...`);
     
-    // Check for missing IDs before starting the transaction
-    if (hiredApplicantId && !hiredApplicationId) {
-        console.warn("hiredApplicationId is missing. Quester/Application state may not be updated correctly.");
+    if (!hiredApplicantId) {
+        setActionMessage("Error: Cannot complete. No applicant was hired.");
+        return;
     }
 
     try {
       await runTransaction(db, async (transaction) => {
         
-        // --- 1. DEFINE ALL REFERENCES ---
+        // 1. References
         const questRef = doc(db, "quests", questId);
-        const questGiverRef = doc(db, "users", user.uid);
-        let questerRef = null;
-        let hiredAppRef = null;
+        const giverRef = doc(db, "users", user.uid); 
+        const questerRef = doc(db, "users", hiredApplicantId);
+        let hiredAppRef = hiredApplicationId ? doc(db, "applications", hiredApplicationId) : null;
 
-        if (hiredApplicantId) {
-          questerRef = doc(db, "users", hiredApplicantId);
-        }
-        if (hiredApplicationId) {
-          hiredAppRef = doc(db, "applications", hiredApplicationId);
-        }
-
-        // --- 2. EXECUTE ALL READS FIRST ---
+        // 2. --- ALL READS MUST BE FIRST ---
         const questSnap = await transaction.get(questRef);
-        const giverSnap = await transaction.get(questGiverRef);
+        const giverSnap = await transaction.get(giverRef);
+        const questerSnap = await transaction.get(questerRef);
         
-        let questerSnap = null;
-        if (questerRef) {
-          questerSnap = await transaction.get(questerRef);
-        }
-        
-        // Optional: Read app to ensure it exists.
+        let appSnap = null; 
         if (hiredAppRef) {
-          const appSnap = await transaction.get(hiredAppRef);
-          if (!appSnap.exists()) {
-            console.warn("Could not find Hired Application:", hiredApplicationId);
-            hiredAppRef = null; // Don't try to update a non-existent doc
-          }
+            appSnap = await transaction.get(hiredAppRef);
         }
-
-        // --- 3. VALIDATE AND PREPARE WRITES ---
         
-        // Validate quest and giver
+        // 3. VALIDATION
         if (!questSnap.exists() || questSnap.data().status !== 'in-progress') {
           throw new Error("Quest not in progress or does not exist.");
         }
-        if (!giverSnap.exists()) {
-          throw new Error("Giver profile not found!");
+        if (!giverSnap.exists()) { throw new Error("Giver profile not found!"); }
+        if (!questerSnap.exists()) { throw new Error("Quester profile not found!"); }
+        if (hiredAppRef && !appSnap.exists()) {
+          console.warn("Could not find application to update:", hiredApplicationId);
+          hiredAppRef = null; 
         }
 
-        // Prepare Quest Giver Updates
-        const giverData = giverSnap.data();
-        const currentGivenCompleted = giverData.questsGivenCompleted || 0;
-        const newGivenCompleted = currentGivenCompleted + 1;
+        // 4. Prepare Writes (with Payout)
+        const questData = questSnap.data();
+        const escrowAmount = Number(questData.escrowAmount || 0);
+        
+        const isSamePerson = giverRef.path === questerRef.path;
+        
         const giverUpdates = { questsGivenCompleted: increment(1) };
+        const questerUpdates = { 
+          questsCompleted: increment(1),
+          walletBalance: increment(escrowAmount) // <-- THIS IS THE PAYOUT
+        };
 
-        if (newGivenCompleted === 3 && !giverData.unlockedAchievements?.includes('quest_giver_1')) {
-          giverUpdates.unlockedAchievements = arrayUnion('quest_giver_1');
-        }
-        if (newGivenCompleted === 10 && !giverData.unlockedAchievements?.includes('quest_giver_2')) {
-          giverUpdates.unlockedAchievements = arrayUnion('quest_giver_2');
-        }
-
-        // Prepare Quester (Hired Applicant) Updates
-        let questerUpdates = null;
-        if (questerSnap && questerSnap.exists()) {
-          const questerData = questerSnap.data();
-          const currentCompleted = questerData.questsCompleted || 0;
-          const newCompleted = currentCompleted + 1;
-          questerUpdates = { questsCompleted: increment(1) };
-          
-          if (newCompleted === 1 && !questerData.unlockedAchievements?.includes('first_quest_completed')) {
-            questerUpdates.unlockedAchievements = arrayUnion('first_quest_completed');
-          }
-          if (newCompleted === 5 && !questerData.unlockedAchievements?.includes('seasoned_quester_1')) {
-            questerUpdates.unlockedAchievements = arrayUnion('seasoned_quester_1');
-          }
-          if (newCompleted === 15 && !questerData.unlockedAchievements?.includes('seasoned_quester_2')) {
-            questerUpdates.unlockedAchievements = arrayUnion('seasoned_quester_2');
-          }
-        } else if (hiredApplicantId) {
-          console.warn("Could not find Quester profile:", hiredApplicantId);
-        }
-
-        // --- 4. EXECUTE ALL WRITES LAST ---
+        // 5. --- ALL WRITES GO LAST ---
+        transaction.update(questRef, { 
+          status: "completed", 
+          completedAt: serverTimestamp(),
+          escrowAmount: 0 
+        });
         
-        // Write 1: Update the Quest
-        transaction.update(questRef, { status: "completed", completedAt: serverTimestamp() });
-        
-        // Write 2: Update the Quest Giver
-        transaction.update(questGiverRef, giverUpdates);
-        
-        // Write 3: Update the Hired Application (if found)
-        if (hiredAppRef) {
-          transaction.update(hiredAppRef, { status: "completed" });
-        }
-        
-        // Write 4: Update the Quester (if found)
-        if (questerRef && questerUpdates) {
+        if (isSamePerson) {
+          transaction.update(giverRef, {
+            questsGivenCompleted: increment(1),
+            questsCompleted: increment(1),
+          });
+        } else {
+          transaction.update(giverRef, giverUpdates);
           transaction.update(questerRef, questerUpdates);
         }
         
+        if (hiredAppRef) {
+          transaction.update(hiredAppRef, { status: "completed" });
+        }
       }); // End Transaction
       
-      setActionMessage("Quest marked as completed!");
+      setActionMessage("Quest marked complete and Quester has been paid!");
       fetchQuests();
       
     } catch (err) {
@@ -411,7 +453,6 @@ export default function MyQuests() {
       setActionMessage(`Error: ${err.message}.`);
     }
   };
-  // --- END REPLACED FUNCTION ---
   
   const handleDeleteQuest = async (questId) => {
     if (!window.confirm("Delete this quest?")) { return; }
@@ -421,21 +462,116 @@ export default function MyQuests() {
         setActionMessage("Quest deleted."); fetchQuests();
     } catch (err) { console.error("Error deleting quest:", err); setActionMessage("Error deleting quest."); }
   };
+  
+  // handleRateQuester
   const handleRateQuester = async (questerId, ratingValue, applicationId) => {
     setActionMessage("Submitting rating...");
     try {
       await runTransaction(db, async (transaction) => {
-        const questerRef = doc(db, "users", questerId); const applicationRef = doc(db, "applications", applicationId);
-        const questerSnap = await transaction.get(questerRef); if (!questerSnap.exists()) { throw "Quester profile not found!"; }
-        const questerData = questerSnap.data(); const currentScore = questerData.totalRatingScore || 0; const currentCount = questerData.numberOfRatings || 0;
-        const newScore = currentScore + ratingValue; const newCount = currentCount + 1; const newAvg = newCount > 0 ? newScore / newCount : 0;
-        const questerUpdates = { totalRatingScore: increment(ratingValue), numberOfRatings: increment(1) };
-        if (newCount >= 10 && newAvg >= 4.8 && !questerData.unlockedAchievements?.includes('top_rated')) { questerUpdates.unlockedAchievements = arrayUnion('top_rated'); }
-        transaction.update(questerRef, questerUpdates);
-        transaction.update(applicationRef, { giverRating: ratingValue, giverRated: true });
+        const questerRef = doc(db, "users", questerId); 
+        const applicationRef = doc(db, "applications", applicationId);
+        
+        transaction.update(questerRef, { 
+          totalRatingScore: increment(ratingValue), 
+          numberOfRatings: increment(1) 
+        });
+        
+        transaction.update(applicationRef, { 
+          giverRating: ratingValue, 
+          giverRated: true 
+        });
       });
-      setActionMessage("Rating submitted."); fetchQuests();
-    } catch (err) { console.error("Error submitting rating:", err); setActionMessage("Error submitting rating."); }
+      setActionMessage("Rating submitted.");
+      fetchQuests(); // Refresh list to hide rating box
+    } catch (err) { 
+      console.error("Error submitting rating:", err); 
+      setActionMessage("Error submitting rating."); 
+    }
+  };
+
+  // --- NEW: Pause/Unpause Quest Function ---
+  const handleTogglePause = async (questId, currentStatus) => {
+    const newStatus = currentStatus === 'open' ? 'paused' : 'open';
+    const action = newStatus === 'paused' ? 'Pausing' : 'Unpausing';
+    setActionMessage(`${action} quest...`);
+
+    try {
+      const questRef = doc(db, "quests", questId);
+      await updateDoc(questRef, {
+        status: newStatus
+      });
+      setActionMessage(`Quest successfully ${newStatus}.`);
+      fetchQuests(); // Refresh the list
+    } catch (err) {
+      console.error(`Error ${action.toLowerCase()} quest:`, err);
+      setActionMessage(`Failed to ${action.toLowerCase()} quest.`);
+    }
+  };
+
+  // --- NEW: Cancel Hired Quest Function (FIXED) ---
+  const handleCancelHired = async (questId, applicationId, escrowAmount, hiredApplicantId) => {
+    if (!window.confirm("Are you sure you want to cancel this hired quest? The Quester will be notified and your funds will be refunded.")) {
+      return;
+    }
+    
+    setActionMessage("Cancelling quest...");
+    const refundAmount = Number(escrowAmount || 0);
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        // 1. References
+        const questRef = doc(db, "quests", questId);
+        const giverRef = doc(db, "users", user.uid);
+        let appRef = applicationId ? doc(db, "applications", applicationId) : null;
+
+        // 2. --- ALL READS FIRST ---
+        const questSnap = await transaction.get(questRef);
+        const giverSnap = await transaction.get(giverRef); // Need to read giver to validate
+        let appSnap = null;
+        if (appRef) {
+          appSnap = await transaction.get(appRef);
+        }
+
+        // 3. --- VALIDATION ---
+        if (!questSnap.exists() || questSnap.data().status !== 'in-progress') {
+          throw new Error("Quest is not in-progress.");
+        }
+        if (!giverSnap.exists()) {
+          throw new Error("Giver profile not found.");
+        }
+        if (appRef && !appSnap.exists()) {
+           console.warn("Could not find application to update:", applicationId);
+           appRef = null; // Don't try to update it
+        }
+        
+        // 4. --- ALL WRITES LAST ---
+        // Refund Giver
+        transaction.update(giverRef, {
+          walletBalance: increment(refundAmount)
+        });
+        
+        // Reset Quest
+        transaction.update(questRef, {
+          status: 'open', // Set back to open
+          hiredApplicantId: null,
+          escrowAmount: 0
+        });
+        
+        // Reject the application
+        if (appRef) {
+          transaction.update(appRef, { status: 'rejected' });
+        }
+      });
+      
+      // Update local state
+      setUser(prevUser => ({ ...prevUser, walletBalance: (prevUser.walletBalance || 0) + refundAmount }));
+      setActionMessage("Quest cancelled and funds refunded. You can now delete this quest or hire a new applicant.");
+      fetchQuests();
+      
+    } catch (err) {
+      console.error("Error cancelling quest:", err);
+      setActionMessage(`Error: ${err.message}`);
+    }
   };
 
   if (!user) { return <div className="bq-container" style={{padding: "2rem"}}>Loading...</div>; }
@@ -444,7 +580,7 @@ export default function MyQuests() {
     <div className="bq-container">
       <div className="my-quests-layout">
         <aside className="profile-sidebar">
-           <img src={`https://ui-avatars.com/api/?name=${user.name}&background=random`} alt={user.name} className="profile-avatar"/>
+           <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}&background=random`} alt={user.name} className="profile-avatar"/>
            <h2>{user.name}</h2> <p>{user.email}</p>
            <div className="profile-stats">
             <div className="stat-item"><span className="stat-value">{loading ? '...' : stats.pendingApps}</span><span className="stat-label">Pending Apps</span></div>
@@ -460,7 +596,7 @@ export default function MyQuests() {
           {loading && <p>Loading quests...</p>}
           {error && <p style={{color: '#ff8a8a'}}>{error}</p>}
           {actionMessage && <p style={{color: 'var(--accent)'}}>{actionMessage}</p>}
-          {!loading && filteredQuests.length === 0 && ( <p>You haven't posted any quests...</p> )}
+          {!loading && filteredQuests.length === 0 && ( <p>You haven't posted any quests for this tab.</p> )}
           <div className="quests-list">
             {!loading && filteredQuests.map(quest => (
               <PostedQuestItem
@@ -470,6 +606,8 @@ export default function MyQuests() {
                 onMarkComplete={handleMarkComplete}
                 onDeleteQuest={handleDeleteQuest}
                 onRateQuester={handleRateQuester}
+                onTogglePause={handleTogglePause}
+                onCancelHired={handleCancelHired} // <-- Pass new handler
               />
             ))}
           </div>

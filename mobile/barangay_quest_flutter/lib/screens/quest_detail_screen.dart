@@ -71,7 +71,9 @@ class _QuestDetailScreenState extends State<QuestDetailScreen> {
       return;
     }
     final d = _doc;
-    if (d == null || !d.exists) return;
+    if (d == null || !d.exists) {
+      return;
+    }
 
     setState(() {
       _applyLoading = true;
@@ -118,22 +120,28 @@ class _QuestDetailScreenState extends State<QuestDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading)
+    if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (_error != null && _doc == null)
+    }
+    if (_error != null && _doc == null) {
       return Scaffold(body: Center(child: Text(_error!)));
-    final d = _doc!;
+    }
+  final d = _doc!;
     final data = d.data()!;
     final currentUser = FirebaseAuth.instance.currentUser;
     final isOwner =
         currentUser != null && data['questGiverId'] == currentUser.uid;
-    String _formatBudget(String type, num amount) =>
+    String formatBudget(String type, num amount) =>
         type == 'Hourly Rate' ? '₱$amount / hr' : '₱$amount (Fixed)';
-    num _parseNum(dynamic v) {
-      if (v is num) return v;
+    num parseNum(dynamic v) {
+      if (v is num) {
+        return v;
+      }
       if (v is String) {
         final n = num.tryParse(v.trim());
-        if (n != null) return n;
+        if (n != null) {
+          return n;
+        }
       }
       return 0;
     }
@@ -164,8 +172,8 @@ class _QuestDetailScreenState extends State<QuestDetailScreen> {
                   value: (data['location']?['address']) ?? data['workType']),
               _InfoChip(
                   label: 'Budget',
-                  value: _formatBudget(data['budgetType'] ?? 'Fixed Rate',
-                      _parseNum(data['budgetAmount']))),
+                  value: formatBudget(data['budgetType'] ?? 'Fixed Rate',
+                      parseNum(data['budgetAmount']))),
             ]),
             const SizedBox(height: 16),
             if (data['imageUrl'] != null)

@@ -3,15 +3,14 @@ import { useOutletContext, useNavigate, Link } from "react-router-dom";
 import { db } from "../firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
 import "./Home.css"; // Use the restored Home.css
-// Import badge style if needed globally or ensure App.css has it
-import '../pages/AchievementsPage.css';
+// achievements css removed
 
 // Constants
 const AUTOPLAY_MS = 2000;
 const HERO_SLIDES = [
-  { url: "/luff.jpg", caption: "Local Hero Image 1" },
-  { url: "/gok.jpg", caption: "Local Hero Image 2" },
-  { url: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=2000&auto=format&fit=crop", caption: "Helpers sample" },
+  { url: "/luff.jpg", caption: "luffy" },
+  { url: "/gok.jpg", caption: "goku" },
+  { url: "/GOJOBRO.jpg", caption: "idol " },
 ];
 
 // SVG Icons
@@ -36,7 +35,6 @@ function IconShield(){ return (<Svg><path d="M12 2l8 4v6c0 5-4 8-8 10-4-2-8-5-8-
 function IconCard(){ return (<Svg><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></Svg>); }
 function IconHandshake(){ return (<Svg><path d="M8 13l4 4 5-5"/><path d="M2 12l6-6 6 6 6-6"/></Svg>); }
 function IconMegaphone(){ return (<Svg><path d="M3 11l11-5v12L3 13v-2Z"/><path d="M14 6v12"/><path d="M7 14v6"/></Svg>); }
-function IconMedal({ tone="gold" }) { const fill = tone==="gold" ? "#FFD166" : tone==="silver" ? "#D1D5DB" : tone==="bronze" ? "#D97706" : "#7FD2FF"; return ( <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="none" aria-hidden="true" focusable="false"> <circle cx="12" cy="12" r="7" fill={fill} /> <path d="M8 3l4 5 4-5" stroke={fill} strokeWidth="2" fill="none" /> </svg> ); }
 function IconStar(){ return (<Svg size={16}><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1L3 9.4l6.1-.9L12 3Z"/></Svg>); }
 
 // Category Icon Mapping
@@ -281,7 +279,7 @@ export default function Home() {
               )}
               {/* Buttons Section */}
               <div className="tq-actions">
-                <Link to="/achievements" className="btn btn-accent">Achievements</Link>
+                {/* <Link to="/achievements" className="btn btn-accent">Achievements</Link> */}
                 {!user && ( <Link to="/signup" className="btn btn-secondary">Become Quester</Link> )}
               </div>
             </div>
@@ -289,15 +287,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* JOIN Section (Conditional) */}
-      {!user && (
-        <section className="join reveal-up" style={{ animationDelay: ".1s" }}>
-           <div className="bq-container join-inner">
-            <div className="join-illustration"> <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=1400&auto=format&fit=crop" alt="Community" loading="lazy" decoding="async" sizes="(max-width: 980px) 92vw, 550px" /> </div>
-            <div className="join-copy"> <h2>Join Movement</h2> <ul className="ticks"> <li>Vetted</li> <li>Support</li> <li>Impact</li> </ul> <Link to="/signup" className="btn btn-primary lg">Sign up</Link> </div>
-          </div>
-        </section>
-      )}
+      {/* --- "JOIN MOVEMENT" SECTION REMOVED --- */}
+      
     </main>
   );
 }
@@ -308,12 +299,12 @@ function CategoryCard({ Icon, label }) {
 }
 
 // Quester/Giver Card Component
-function Quester({ id, name, role, img, completed, rating, medal, user, onRequireAuth, statLabel = "Done" }) {
+function Quester({ id, name, role, img, completed, rating, user, onRequireAuth, statLabel = "Done" }) {
   return (
     <div className="quester">
       <div className="avatar-wrap">
         <img src={img} alt={`${name} – ${role}`} className="avatar" loading="lazy" decoding="async" sizes="56px" />
-        {medal && medal !== 'none' && <span className="q-badge" title="Medal"> <IconMedal tone={medal} /> </span>}
+        {/* Medal logic removed */}
       </div>
       <div className="q-body">
         <div className="q-line">
@@ -327,7 +318,6 @@ function Quester({ id, name, role, img, completed, rating, medal, user, onRequir
       </div>
       <div className="q-cta">
         <Link to={`/profile/${id}`} className="btn btn-ghost">View</Link>
-        {/* Hire Button Removed */}
       </div>
     </div>
   );

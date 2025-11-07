@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { db } from '../firebase';
 // Import transaction and increment
-import { collection, query, where, getDocs, orderBy, deleteDoc, doc, runTransaction, updateDoc, increment, arrayUnion } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, deleteDoc, doc, runTransaction, updateDoc, increment } from 'firebase/firestore';
 import StarRatingInput from '../components/StarRatingInput';
 import "./MyApplications.css";
 import "../pages/Home.css";
@@ -117,16 +117,20 @@ export default function MyApplications() {
       try {
         setLoading(true); setError(null); setActionMessage(""); // Reset states
         const appsCollection = collection(db, "applications");
-        // Query applications where applicantId matches current user's ID, order by application date
+        
+        // --- THIS IS THE FIX for "Unnecessary" ---
+        // Query applications where applicantId matches AND status is one of the valid ones
         const q = query(
           appsCollection,
           where("applicantId", "==", user.uid),
+          // This ensures we only get *valid* applications and ignore old test data
+          where("status", "in", ["pending", "hired", "rejected", "completed"]),
           orderBy("appliedAt", "desc")
         );
         const querySnapshot = await getDocs(q);
-        // Map Firestore documents to application objects
         const appsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setApplications(appsData); // Update state with fetched applications
+        
+        setApplications(appsData); // Update state with *clean* applications
       } catch (err) {
         // Handle potential Firestore index errors
         if (err.code === 'failed-precondition') {
@@ -147,10 +151,10 @@ export default function MyApplications() {
 
   // Memoized calculation to filter applications based on the active tab
   const filteredApplications = useMemo(() => {
-    if (filter === 'All') { return applications; } // Show all if 'All' tab is active
-    const filterStatus = filter.toLowerCase(); // Convert tab name to lowercase status
-    return applications.filter(app => app.status === filterStatus); // Filter by status
-  }, [applications, filter]); // Rerun when applications or filter changes
+    if (filter === 'All') { return applications; } // 'applications' is already pre-filtered
+    const filterStatus = filter.toLowerCase(); 
+    return applications.filter(app => app.status === filterStatus);
+  }, [applications, filter]); 
 
   // Function to handle withdrawing an application
   const handleWithdraw = async (appId) => {
@@ -168,7 +172,7 @@ export default function MyApplications() {
     }
   };
 
-  // Function to handle rating the Quest Giver
+  // handleRateGiver
   const handleRateGiver = async (giverId, ratingValue, applicationId) => {
     setActionMessage("Submitting rating...");
     try {
@@ -177,31 +181,15 @@ export default function MyApplications() {
         const giverRef = doc(db, "users", giverId);
         const applicationRef = doc(db, "applications", applicationId);
 
-        // Get current giver data within the transaction
-        const giverSnap = await transaction.get(giverRef);
-        if (!giverSnap.exists()) { throw "Quest Giver profile not found!"; }
-
-        const giverData = giverSnap.data();
-        const currentScore = giverData.totalRatingScore || 0;
-        const currentCount = giverData.numberOfRatings || 0;
-        const newScore = currentScore + ratingValue;
-        const newCount = currentCount + 1;
-        const newAvg = newCount > 0 ? newScore / newCount : 0;
-
         // Prepare updates for the Giver's document
         const giverUpdates = {
           totalRatingScore: increment(ratingValue), // Atomically increment score
           numberOfRatings: increment(1),         // Atomically increment count
         };
 
-        // Check if the Giver unlocks the Top Rated achievement
-        if (newCount >= 10 && newAvg >= 4.8 && !giverData.unlockedAchievements?.includes('top_rated')) {
-            giverUpdates.unlockedAchievements = arrayUnion('top_rated'); // Add achievement if criteria met
-            console.log(`Awarding 'top_rated' to Giver ${giverId}`);
-        }
-
         // Update Giver document
         transaction.update(giverRef, giverUpdates);
+        
         // Update Application document to mark as rated by the quester
         transaction.update(applicationRef, {
             questerRating: ratingValue, // Store the rating given
