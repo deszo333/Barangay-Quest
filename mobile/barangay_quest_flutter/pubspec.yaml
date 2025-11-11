@@ -14,15 +14,34 @@ dependencies:
   firebase_auth:
   cloud_firestore:
   firebase_storage:
+  provider: ^6.1.2
+  image_picker: ^1.1.2
+  intl: ^0.19.0
+  location: ^5.0.0
   # Routing & UI
   go_router:
+  permission_handler: ^11.3.1
   google_fonts:
-  image_picker:
+  geocoding: ^3.0.0
+  flutter_svg: ^2.0.10+1
+  google_maps_flutter: ^2.6.1
+  connectivity_plus: ^5.0.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints:
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
+  assets:
+    - lib/assets/icons/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  # point to the files under lib/
+  image_path: "lib/assets/icons/appicon.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "lib/assets/icons/appicon.png"

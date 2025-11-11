@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import { db } from '../firebase';
-import { doc, getDoc, collection, addDoc, serverTimestamp, query, where, getDocs, limit } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, serverTimestamp, query, where, getDocs, limit, updateDoc, increment, runTransaction } from 'firebase/firestore';
 import "../pages/Home.css"; // For button styles
 import "./MyApplications.css"; // Borrow sidebar styles for potential future use
 
@@ -107,15 +107,31 @@ export default function QuestDetailPage() {
     setApplyLoading(true);
 
     try {
-      await addDoc(collection(db, "applications"), {
-        questId: quest.id,
-        questTitle: quest.title,
-        questGiverId: quest.questGiverId,
-        applicantId: user.uid,
-        applicantName: user.name,
-        status: "pending",
-        appliedAt: serverTimestamp()
+      // --- START OF PATCH ---
+      // Use a transaction to update both collections
+      await runTransaction(db, async (transaction) => {
+        // 1. Define document references
+        const questRef = doc(db, "quests", quest.id);
+        const newAppRef = doc(collection(db, "applications")); // Create a new doc ref
+
+        // 2. Write the new application
+        transaction.set(newAppRef, {
+          questId: quest.id,
+          questTitle: quest.title,
+          questGiverId: quest.questGiverId,
+          applicantId: user.uid,
+          applicantName: user.name,
+          status: "pending",
+          appliedAt: serverTimestamp()
+        });
+
+        // 3. Update the applicantCount on the quest
+        transaction.update(questRef, {
+          applicantCount: increment(1)
+        });
       });
+      // --- END OF PATCH ---
+
       setApplied(true);
     } catch (err) {
       console.error("Error applying:", err);
@@ -162,7 +178,7 @@ export default function QuestDetailPage() {
         <div><strong>Location:</strong><br/> {quest.location?.address || quest.workType}</div>
         <div><strong>Schedule:</strong><br/> {quest.schedule}</div>
         <div><strong>Engagement:</strong><br/> {quest.engagement || 'One-Time'}</div>
-        <div><strong>Budget:</strong><br/> {formatPrice(quest.budgetType, quest.budgetAmount)}</div>
+    <div><strong>Price:</strong><br/> {formatPrice(quest.priceType, quest.price)}</div>
       </div>
       {/* --- END UPDATED --- */}
 

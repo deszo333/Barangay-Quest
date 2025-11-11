@@ -156,3 +156,27 @@
     gap: 18px; /* Maintain consistent gap */
   }
 }
+
+/* --- UPDATED & NEW RULES --- */
+
+/* tighten the password section */
+.password-group {
+  display: grid;
+  gap: 4px; /* was 8px, this halves the vertical space */
+}
+
+/* make the checkboxes hug the fields */
+.password-group .password-toggle,
+.password-group .call-toggle {
+  margin-top: 0;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+/* optional: make the strength bar not float away */
+.password-group .password-strength-bar {
+  margin-top: 0;
+}
+.password-group .password-strength-label {
+  margin-top: 2px;
+}

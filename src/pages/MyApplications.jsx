@@ -6,6 +6,7 @@ import { collection, query, where, getDocs, orderBy, deleteDoc, doc, runTransact
 import StarRatingInput from '../components/StarRatingInput';
 import "./MyApplications.css";
 import "../pages/Home.css";
+import "./PostJob.css"; // <-- ADD THIS IMPORT
 
 // Helper hook to get user context
 function useUser() { return useOutletContext(); }
@@ -18,10 +19,11 @@ function formatDate(timestamp) {
 
 // --- Application Item Component ---
 function ApplicationItem({ application, onWithdraw, onRateGiver }) {
-    const [showRatingInput, setShowRatingInput] = useState(false);
-    const [rating, setRating] = useState(0);
-    const [ratingLoading, setRatingLoading] = useState(false);
-    const [giverName, setGiverName] = useState('Quest Giver'); // State for giver name
+  const [showRatingInput, setShowRatingInput] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [reviewText, setReviewText] = useState(""); // <-- ADD THIS
+  const [ratingLoading, setRatingLoading] = useState(false);
+  const [giverName, setGiverName] = useState('Quest Giver'); // State for giver name
 
     // Fetch Giver Name for Rating Prompt
     useEffect(() => {
@@ -50,10 +52,11 @@ function ApplicationItem({ application, onWithdraw, onRateGiver }) {
 
     // Submit rating function
     const submitRating = async () => {
-        if (rating === 0 || !application.questGiverId || !application.id) return;
-        setRatingLoading(true);
-        await onRateGiver(application.questGiverId, rating, application.id);
-        setRatingLoading(false);
+  if (rating === 0 || !application.questGiverId || !application.id) return;
+  setRatingLoading(true);
+  // --- PASS THE REVIEW TEXT ---
+  await onRateGiver(application.questGiverId, rating, application.id, reviewText.trim());
+  setRatingLoading(false);
     };
 
     return (
@@ -84,18 +87,27 @@ function ApplicationItem({ application, onWithdraw, onRateGiver }) {
 
             {/* --- Rating Section for Giver --- */}
             {showRatingInput && (
-                <div className="app-rating-section">
-                    <h4>Rate {giverName}</h4>
-                    <StarRatingInput rating={rating} setRating={setRating} />
-                    <button
-                        className="btn btn-accent"
-                        style={{ marginTop: '1rem' }}
-                        onClick={submitRating}
-                        disabled={rating === 0 || ratingLoading}
-                    >
-                        {ratingLoading ? "Submitting..." : "Submit Rating"}
-                    </button>
-                </div>
+        <div className="app-rating-section">
+          <h4>Rate {giverName}</h4>
+          <StarRatingInput rating={rating} setRating={setRating} />
+          {/* --- ADD THIS TEXTAREA --- */}
+          <textarea
+            placeholder="Leave a review (optional)..."
+            className="form-textarea"
+            style={{ marginTop: '1rem', minHeight: '80px', background: 'var(--bg)' }}
+            value={reviewText}
+            onChange={(e) => setReviewText(e.target.value)}
+          />
+          {/* --- END ADD --- */}
+          <button
+            className="btn btn-accent"
+            style={{ marginTop: '1rem' }}
+            onClick={submitRating}
+            disabled={rating === 0 || ratingLoading}
+          >
+            {ratingLoading ? "Submitting..." : "Submit Rating"}
+          </button>
+        </div>
             )}
         </div>
     );
@@ -115,7 +127,7 @@ export default function MyApplications() {
   const fetchApplications = async () => {
       if (!user) return; // Don't run if user isn't loaded
       try {
-        setLoading(true); setError(null); setActionMessage(""); // Reset states
+        setLoading(true); setError(null); // Reset states // Reset states
         const appsCollection = collection(db, "applications");
         
         // --- THIS IS THE FIX for "Unnecessary" ---
@@ -173,7 +185,8 @@ export default function MyApplications() {
   };
 
   // handleRateGiver
-  const handleRateGiver = async (giverId, ratingValue, applicationId) => {
+  // handleRateGiver
+  const handleRateGiver = async (giverId, ratingValue, applicationId, reviewText) => { // <-- 1. ADD reviewText HERE
     setActionMessage("Submitting rating...");
     try {
       // Use Firestore transaction for atomic updates
@@ -194,6 +207,7 @@ export default function MyApplications() {
         transaction.update(applicationRef, {
             questerRating: ratingValue, // Store the rating given
             questerRated: true,         // Set the flag
+            questerReview: reviewText || "" // <-- 2. USE THE reviewText VARIABLE
         });
       }); // End transaction
       setActionMessage("Rating submitted successfully!");
@@ -267,7 +281,9 @@ export default function MyApplications() {
                 key={app.id}
                 application={app}
                 onWithdraw={handleWithdraw}
-                onRateGiver={handleRateGiver} // Pass the handler
+                onRateGiver={(giverId, ratingValue, applicationId, reviewText) =>
+                  handleRateGiver(giverId, ratingValue, applicationId, reviewText)
+                }
               />
             ))}
           </div>

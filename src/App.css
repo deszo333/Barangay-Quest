@@ -193,7 +193,7 @@ img{max-width:100%; display:block} /* Basic image reset */
 }
 
 /* Pill Styles */
-.pill{ background:var(--card); border:1px solid #274a60; color:#bfe7ff; padding:6px 10px; border-radius:999px; font-size:.75rem; font-weight:600; display: inline-block; line-height: 1; }
+.pill{ background:var(--card); border:1px solid #274a60; color:#bfe7ff; padding:6px 10px; border-radius:999px; font-size:.75rem; font-weight:600; display: inline-block; line-height: 1; white-space: nowrap}
 .pill.slate{ background:#0e2230; color:#92b3c7 }
 .pill.gold{ background:rgba(161, 98, 7, 0.2); border-color:rgba(217, 119, 6, 0.4); color:#f59e0b }
 .pill.tiny{ padding:3px 8px; font-size:.7rem; }

@@ -2,15 +2,36 @@ import React, { useEffect, useRef, useState } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
 import { db } from "../firebase";
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
-import "./Home.css"; // Use the restored Home.css
-// achievements css removed
+import "./Home.css"; 
 
-// Constants
-const AUTOPLAY_MS = 2000;
+const AUTOPLAY_MS = 2000; 
+
+
 const HERO_SLIDES = [
-  { url: "/luff.jpg", caption: "luffy" },
-  { url: "/gok.jpg", caption: "goku" },
-  { url: "/GOJOBRO.jpg", caption: "idol " },
+  {
+    id: 1,
+    bgUrl: "/sunset-background.jpg", 
+    figureUrl: "/figure.png", 
+    figurePos: { top: '60px', right: '5vw', left: 'auto', width: '45%' },
+    title: <>Find quest.<br /> <span>EMPOWER COMMUNITY</span></>,
+    sub: "Vouched Jobs"
+  },
+  {
+    id: 2,
+    bgUrl: "/sunset-background.jpg", 
+    figureUrl: "/figure-2.png", 
+    figurePos: { top: '10px', right: '5vw', left: 'auto', width: '45%' },
+    title: <>Post Tasks.<br /> <span>GET TRUSTED HELP</span></>,
+    sub: "From verified members"
+  },
+  {
+    id: 3,
+    bgUrl: "/sunset-background.jpg", // A third background
+    figureUrl: "/figure-3.png", // A third character
+    figurePos: { top: '60px', right: '5vw', left: 'auto', width: '45%' },
+    title: <>Earn Safely.<br /> <span>WITH ESCROW</span></>,
+    sub: "Secure, vouched payouts"
+  }
 ];
 
 // SVG Icons
@@ -36,6 +57,7 @@ function IconCard(){ return (<Svg><rect x="3" y="6" width="18" height="12" rx="2
 function IconHandshake(){ return (<Svg><path d="M8 13l4 4 5-5"/><path d="M2 12l6-6 6 6 6-6"/></Svg>); }
 function IconMegaphone(){ return (<Svg><path d="M3 11l11-5v12L3 13v-2Z"/><path d="M14 6v12"/><path d="M7 14v6"/></Svg>); }
 function IconStar(){ return (<Svg size={16}><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1L3 9.4l6.1-.9L12 3Z"/></Svg>); }
+function IconPhone(){ return (<Svg><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></Svg>); } 
 
 // Category Icon Mapping
 const CATEGORY_ICONS = {
@@ -76,23 +98,34 @@ export default function Home() {
   const { user } = useOutletContext();
   const navigate = useNavigate();
 
-  const requireAuth = (e, path = "/login") => { if (!user) { e.preventDefault(); navigate(path); } };
-
-  // Hero Carousel State & Logic
+  // --- NEW: Carousel State ---
   const [index, setIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const autoRef = useRef(null);
-  const touchStartX = useRef(0);
-  const touchDeltaX = useRef(0);
-  const prefersReduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  useEffect(() => { if (prefersReduced) return; startAuto(); return () => { stopAuto(); }; }, [index, isPaused, prefersReduced]);
-  function stopAuto() { if (autoRef.current) clearInterval(autoRef.current); }
-  function startAuto() { stopAuto(); if (!isPaused) { autoRef.current = setInterval(() => setIndex((i) => (i + 1) % HERO_SLIDES.length), AUTOPLAY_MS); } }
-  const goTo = (i) => { setIndex(i); stopAuto(); startAuto(); };
-  const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; touchDeltaX.current = 0; stopAuto(); };
-  const onTouchMove  = (e) => { touchDeltaX.current = e.touches[0].clientX - touchStartX.current; };
-  const onTouchEnd   = ()  => { const threshold = 60; if (touchDeltaX.current > threshold) setIndex((i) => (i - 1 + HERO_SLIDES.length) % HERO_SLIDES.length); else if (touchDeltaX.current < -threshold) setIndex((i) => (i + 1) % HERO_SLIDES.length); startAuto(); };
-  const onKeyDown = (e) => { if (e.key === "ArrowRight") { setIndex((i) => (i + 1) % HERO_SLIDES.length); stopAuto(); startAuto(); } if (e.key === "ArrowLeft")  { setIndex((i) => (i - 1 + HERO_SLIDES.length) % HERO_SLIDES.length); stopAuto(); startAuto(); } };
+
+  // --- NEW: Autoplay Logic ---
+  useEffect(() => {
+    const startAuto = () => {
+      autoRef.current = setInterval(() => {
+        setIndex((prevIndex) => (prevIndex + 1) % HERO_SLIDES.length);
+      }, AUTOPLAY_MS);
+    };
+    startAuto(); // Start on mount
+    return () => {
+      if (autoRef.current) clearInterval(autoRef.current); // Clear on unmount
+    };
+  }, []);
+
+  // --- NEW: Dot click handler ---
+  const goTo = (i) => {
+    setIndex(i);
+    // Reset autoplay timer
+    if (autoRef.current) clearInterval(autoRef.current);
+    autoRef.current = setInterval(() => {
+      setIndex((prevIndex) => (prevIndex + 1) % HERO_SLIDES.length);
+    }, AUTOPLAY_MS);
+  };
+
+  const requireAuth = (e, path = "/login") => { if (!user) { e.preventDefault(); navigate(path); } };
 
   // Top Questers State & Fetch
   const [topQuesters, setTopQuesters] = useState([]);
@@ -164,38 +197,83 @@ export default function Home() {
   // Render the Home page
   return (
     <main className="home">
-      {/* --- HERO Section --- */}
-      <section
-        className="hero polished reveal-up"
-        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
-        onKeyDown={onKeyDown} tabIndex={0}
-        onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}
-        onFocus={() => setIsPaused(true)} onBlur={() => setIsPaused(false)}
-      >
-        <div className="hero-bg" style={{ backgroundImage: `url(${HERO_SLIDES[index].url})` }} aria-hidden="true" />
-        <div className="hero-overlay" aria-hidden="true" />
-        <div className="bq-container hero-grid">
-          <div className="hero-copy">
-            {/* Using text from screenshot */}
-            <h1> Find quest.<br /> <span>EMPOWER COMMUNITY</span> </h1>
-            <p className="sub">Vouched Jobs</p>
-            <div className="hero-cta">
-              {/* Using text from screenshot */}
-              <Link to="/find-jobs" className="btn btn-accent">Browse</Link>
-              {user && user.status === 'approved' ? (
-                  <Link to="/post-job" className="btn btn-secondary"> Post </Link>
-              ) : ( // Link to signup if not approved/logged in
-                   <Link to="/signup" className="btn btn-secondary" onClick={(e) => { if(user) { e.preventDefault(); navigate('/pending-approval'); } /* Redirect pending users */ }}> Post </Link>
-              )}
+      
+      {/* --- CONTAINER WRAPPER --- */}
+      <div className="hero-container">
+
+        {/* --- HERO Section (MODIFIED) --- */}
+        <section
+          className="hero polished reveal-up"
+          tabIndex={0}
+        >
+          {/* --- NEW: Background Track --- */}
+          <div className="hero-bg-track">
+            {HERO_SLIDES.map((slide, i) => (
+              <div
+                key={slide.id}
+                className="hero-bg-slide"
+                style={{
+                  backgroundImage: `url(${slide.bgUrl})`,
+                  opacity: i === index ? 1 : 0
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="hero-overlay" aria-hidden="true" />
+
+          {/* --- NEW: Text and Dots --- */}
+          <div className="bq-container hero-grid">
+            {/* Add key={index} to force fade animation */}
+            <div className="hero-copy" key={index}>
+              <h1>{HERO_SLIDES[index].title}</h1>
+              <p className="sub">{HERO_SLIDES[index].sub}</p>
+              <div className="hero-cta">
+                <Link to="/find-jobs" className="btn btn-accent">Browse</Link>
+                {user && user.status === 'approved' ? (
+                    <Link to="/post-job" className="btn btn-secondary"> Post </Link>
+                ) : (
+                     <Link to="/signup" className="btn btn-secondary" onClick={(e) => { if(user) { e.preventDefault(); navigate('/pending-approval'); } }}> Post </Link>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="hero-dots" role="tablist" aria-label="Hero slides">
-          {HERO_SLIDES.map((_, i) => (
-            <button key={i} type="button" role="tab" aria-selected={index === i} aria-label={`Go to slide ${i + 1}`} className={"dot" + (index === i ? " active" : "")} onClick={() => goTo(i)} />
+          
+          {/* --- NEW: Dots Restored --- */}
+          <div className="hero-dots">
+            {HERO_SLIDES.map((s, i) => (
+              <button
+                key={s.id}
+                type="button"
+                className={`dot ${i === index ? "active" : ""}`}
+                onClick={() => goTo(i)}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+          
+        </section>
+
+        {/* --- NEW: Figure Track (renders all figures) --- */}
+        <div className="hero-figure-track">
+          {HERO_SLIDES.map((slide, i) => (
+            <img
+              key={slide.id}
+              src={slide.figureUrl}
+              alt=""
+              className="hero-figure"
+              style={{
+                ...slide.figurePos, // Applies top, left, right, width
+                opacity: i === index ? 1 : 0
+              }}
+              aria-hidden="true"
+            />
           ))}
         </div>
-      </section>
+
+      {/* --- CLOSE THE CONTAINER --- */}
+      </div>
+
 
       {/* --- AFTER HERO Section --- */}
       <section className="content-wrap reveal-up">
@@ -241,6 +319,29 @@ export default function Home() {
                 <li><span className="s-ico"><IconMegaphone /></span> Endorsed</li>
               </ul>
             </div>
+
+            {/* --- NEW DOWNLOAD APP CARD --- */}
+            <div className="card section download-app-card">
+              <div className="download-app-icon">
+                <IconPhone />
+              </div>
+              <div className="download-app-text">
+                <h3>Download the Mobile App</h3>
+                <p>Get the full Barangay Quest experience on your device.</p>
+              </div>
+              <div className="download-app-action">
+                <a 
+                  href="https://drive.google.com/file/d/1mW1PGPJTrY-OoH6Enk4HbXyU5V7vEi8c/view?usp=sharing" 
+                  className="btn btn-accent" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  Download APK
+                </a>
+              </div>
+            </div>
+            {/* --- END NEW CARD --- */}
+
           </div>
 
           {/* Side column */}

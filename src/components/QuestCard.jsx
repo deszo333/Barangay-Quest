@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { db } from '../firebase'; // Import db
-// Import doc and getDoc to fetch user data
-import { collection, addDoc, serverTimestamp, query, where, getDocs, limit, doc, getDoc } from 'firebase/firestore';
+// --- IMPORT THE FUNCTIONS YOU NEED ---
+import { 
+  collection, addDoc, serverTimestamp, query, where, 
+  getDocs, limit, doc, getDoc, runTransaction, increment 
+} from 'firebase/firestore';
 import '../pages/FindJobs.css'; // Import relevant CSS for card styles
-// achievements css removed
 
 // Helper to get user context
 function useUser() {
@@ -31,18 +33,18 @@ function formatTime(timestamp) {
   return "Just now";
 }
 
-// --- Badge Definitions Removed ---
 
 const QuestCard = ({ quest }) => {
   const { user: loggedInUser } = useUser();
   const [loading, setLoading] = useState(false);
   const [applied, setApplied] = useState(false);
   const [error, setError] = useState(null);
-  const [giverData, setGiverData] = useState(null); // State to hold the full data of the quest giver
+  const [giverData, setGiverData] = useState(null); 
 
   const {
-    id, title, location, workType, budgetType, budgetAmount,
-    imageUrl, createdAt, questGiverName, questGiverId
+    id, title, location, workType, priceType, price,
+    imageUrl, // <-- THIS IS THE FIELD FROM POSTJOB.JSX
+    createdAt, questGiverName, questGiverId
   } = quest;
 
   const isOwnQuest = loggedInUser?.uid === questGiverId;
@@ -95,25 +97,40 @@ const QuestCard = ({ quest }) => {
     fetchGiverData();
   }, [questGiverId]);
 
-  // Handle Apply
+  // --- THIS IS THE CORRECTED APPLY FUNCTION ---
   const handleApply = async () => {
     setError(null);
     if (!loggedInUser) { setError("Please log in to apply."); return; }
     if (isOwnQuest) { setError("You cannot apply to your own quest."); return; }
     if (applied) return; 
+    if (quest.status !== 'open') { setError("This quest is closed."); return; }
 
     setLoading(true);
 
     try {
-      await addDoc(collection(db, "applications"), {
-        questId: id,
-        questTitle: title,
-        questGiverId: questGiverId,
-        applicantId: loggedInUser.uid,
-        applicantName: loggedInUser.name,
-        status: "pending",
-        appliedAt: serverTimestamp()
+      // Use the same transaction logic from QuestDetailPage.jsx
+      await runTransaction(db, async (transaction) => {
+        // 1. Define document references
+        const questRef = doc(db, "quests", id);
+        const newAppRef = doc(collection(db, "applications")); // Create a new doc ref
+
+        // 2. Write the new application
+        transaction.set(newAppRef, {
+          questId: id,
+          questTitle: title,
+          questGiverId: questGiverId,
+          applicantId: loggedInUser.uid,
+          applicantName: loggedInUser.name,
+          status: "pending",
+          appliedAt: serverTimestamp()
+        });
+
+        // 3. Update the applicantCount on the quest
+        transaction.update(questRef, {
+          applicantCount: increment(1)
+        });
       });
+      
       setApplied(true);
     } catch (err) {
       console.error("Error applying:", err);
@@ -122,8 +139,9 @@ const QuestCard = ({ quest }) => {
       setLoading(false);
     }
   };
+  // --- END OF FIX ---
 
-  const priceText = formatPrice(budgetType, budgetAmount);
+  const priceText = formatPrice(priceType, price);
   const timeText = formatTime(createdAt);
   const locationText = workType === 'Online' ? 'Online' : (location?.address || 'In Person');
 
@@ -132,16 +150,20 @@ const QuestCard = ({ quest }) => {
     ? (giverData.totalRatingScore / giverData.numberOfRatings).toFixed(1)
     : 'N/A'; 
   const ratingCount = giverData?.numberOfRatings || 0;
-  // const giverBadges = getUserBadges(giverData); // Removed
 
   return (
+    // This structure matches your FindJobs.css
     <div className="quest-card">
       <div className="card-header">
         <div className="card-header-text">
           <Link to={`/quest/${id}`} className="card-title">{title}</Link>
           <span className="card-location">{locationText}</span>
         </div>
+        
+        {/* --- THIS IS THE FIX --- */}
         <img
+          // If `imageUrl` exists (is not null/undefined/""), use it.
+          // Otherwise, use the ui-avatars fallback.
           src={imageUrl || `https://ui-avatars.com/api/?name=${title.charAt(0)}&background=random`}
           alt={title}
           className="card-image"
@@ -158,7 +180,6 @@ const QuestCard = ({ quest }) => {
             <Link to={`/profile/${questGiverId}`} style={{fontWeight: 600, textDecoration: 'underline', marginLeft: '4px'}}>
                 {questGiverName}
             </Link>
-            {/* Badge map removed */}
         </span>
       </div>
 

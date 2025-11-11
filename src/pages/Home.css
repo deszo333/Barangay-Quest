@@ -1,24 +1,123 @@
 /* Container utility is global in App.css */
 
+/* --- NEW CONTAINER RULE --- */
+.hero-container {
+  position: relative; /* This is the new anchor */
+}
+
 /* ====================== HERO ====================== */
 /* Styles specific to the polished hero variant */
-.hero.polished{ position:relative; padding:120px 0 90px; overflow:hidden }
-.hero-bg{ position:absolute; inset:0; background-size:cover; background-position:center; transform: scale(1.06); filter: saturate(.92) contrast(1.02) brightness(.9); transition: background-image 0.5s ease-in-out, transform 5s ease; }
-.hero.polished:hover .hero-bg { transform: scale(1.08); }
+.hero.polished{ 
+  position:relative; 
+  padding: 120px 0 90px;
+  z-index: 1;
+  overflow: hidden; /* <-- Add overflow:hidden to contain backgrounds */
+}
 
-.hero-overlay{ position:absolute; inset:0; background: radial-gradient(80% 80% at 50% 30%, rgba(6,20,30,.2), rgba(6,20,30,.75) 60%, rgba(6,20,30,.92)) }
-.hero-grid{ position:relative; min-height:380px; display:flex; align-items:flex-end }
+/* --- NEW: Background Track & Slides --- */
+.hero-bg-track {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.hero-bg-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.06); 
+  filter: saturate(.92) contrast(1.02) brightness(.9);
+  transition: opacity 1s ease-in-out; /* Fade transition */
+}
+/* --- END NEW --- */
+
+
+.hero-overlay{ 
+  position:absolute; 
+  inset:0; 
+  z-index: 1; 
+  background: radial-gradient(80% 80% at 50% 30%, rgba(6,20,30,.2), rgba(6,20,30,.75) 60%, rgba(6,20,30,.92)) 
+}
+.hero-grid{ 
+  position:relative; 
+  z-index: 3; 
+  min-height:380px; 
+  display:flex; 
+  align-items:flex-end 
+}
 .hero-copy h1{ font-size: clamp(32px, 4.6vw, 54px); line-height:1.1; margin:0 0 10px; color:#fff; text-shadow: 0 4px 30px rgba(0,0,0,.6) }
 .hero-copy h1 span{ text-transform:uppercase; color: #f5d0a9; }
 .hero .sub{ opacity:.92; margin:.2rem 0 1.5rem; font-size:1.1rem; color:#dbe8f2 }
 .hero-cta{ display:flex; flex-wrap: wrap; gap:14px }
-.hero-dots{ position:absolute; left:50%; bottom:30px; transform:translateX(-50%); display:flex; gap:9px; z-index:5 }
-.hero-dots .dot{ width:10px; height:10px; border-radius:999px; background:rgba(255,255,255,.45); border:0; cursor:pointer; transition: transform .18s ease, background .18s ease }
+
+/* --- NEW: Text Fade Animation --- */
+.hero-copy {
+  animation: heroFadeIn 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- MODIFIED: Dots Styling --- */
+.hero-dots{ 
+  position:absolute; 
+  left:50%; 
+  bottom:30px; 
+  transform:translateX(-50%); 
+  display:flex; 
+  gap:9px; 
+  z-index:5; /* Keep dots on top of hero content */
+}
+.hero-dots .dot{ 
+  width:10px; 
+  height:10px; 
+  border-radius:999px; 
+  background:rgba(255,255,255,.45); 
+  border:0; 
+  cursor:pointer; 
+  transition: transform .18s ease, background .18s ease 
+}
 .hero-dots .dot:hover{ transform: scale(1.2) }
-.hero-dots .dot.active{ background:var(--accent-2); transform: scale(1.1); }
+.hero-dots .dot.active{ background:var(--white); transform: scale(1.1); }
+
+
+/* --- NEW: Figure Track & Figure Styling --- */
+.hero-figure-track {
+  position: absolute;
+  inset: 0; /* Cover the whole container */
+  z-index: 2; /* Below content (3), above hero (1) */
+  pointer-events: none; /* Let clicks pass through */
+}
+.hero-figure {
+  position: absolute;
+  max-width: 500px; /* Base max width */
+  pointer-events: none;
+  /* This transition lets it fade AND move smoothly */
+  transition: opacity 1s ease-in-out, 
+              top 1s ease-in-out, 
+              left 1s ease-in-out, 
+              right 1s ease-in-out,
+              width 1s ease-in-out;
+}
+/* --- END NEW --- */
+
 
 /* ====================== CONTENT WRAP ====================== */
-.content-wrap{ background:var(--bg); padding:32px 0 40px; border-top:1px solid rgba(255,255,255,.06); border-bottom:1px solid rgba(255,255,255,.06) }
+.content-wrap{ 
+  position: relative; 
+  z-index: 3; /* Scrolls OVER the figure */
+  background:var(--bg); 
+  padding:32px 0 40px; 
+  border-top:1px solid rgba(255,255,255,.06); 
+  border-bottom:1px solid rgba(255,255,255,.06) 
+}
 .content-grid{ display:grid; grid-template-columns: 1.6fr .9fr; gap:24px; }
 
 /* On screens 1100px wide or less, stack to 1 column */
@@ -106,8 +205,10 @@
 
 .avatar-wrap{ position:relative; width:48px; height:48px }
 .avatar{ width:48px; height:48px; object-fit:cover; border-radius:12px; border:1px solid #244c60 }
-.q-badge{ position:absolute; bottom:-6px; right:-6px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)) }
+.q-badge{ position:absolute; bottom:-6px; right:-6px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
 .q-body{ min-width:0 }
+
+.q-line a { font-weight: 600; color: inherit; min-width: 0 }
 .q-line{ display:flex; align-items:center; gap:8px; color:#f2f8fc }
 .q-line a { font-weight: 600; color: inherit; }
 .q-line a:hover { text-decoration: underline; color: var(--accent); }
@@ -117,13 +218,4 @@
 .tq-actions{ display:flex; flex-wrap: wrap; gap:10px; margin-top:16px; border-top: 1px solid var(--card); padding-top: 16px; }
 
 /* ====================== JOIN (REMOVED) ====================== */
-/* .join{ background:#f4f7fb; color:#1a2b38; padding:60px 0; margin-top: 2rem; }
-.join-inner{ display:grid; grid-template-columns: .8fr 1fr; gap:40px; align-items:center }
-@media (max-width: 980px){ .join-inner{ grid-template-columns: 1fr; gap: 30px; } }
-.join-illustration{ background:#fff; border:1px solid #dbe8f2; border-radius:18px; overflow:hidden; min-height:220px; box-shadow: 0 20px 50px rgba(6,48,71,.12); }
-.join-illustration img{ width:100%; height:100%; object-fit:cover }
-.join-copy h2{ margin:0 0 12px; font-size:clamp(1.5rem, 4vw, 2rem); font-weight: 700; color: #0a1b25; }
-.ticks{ list-style:none; padding:0; margin:16px 0 24px; display: grid; gap: 8px; }
-.ticks li{ position:relative; padding-left:28px; font-weight: 500; color: #374b59; }
-.ticks li:before{ content:'✔'; position:absolute; left:0; top:2px; color:#16a34a; font-size: 1.1em; font-weight: bold;}
-*/
+/* ... */

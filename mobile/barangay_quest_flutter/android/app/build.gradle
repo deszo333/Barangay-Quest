@@ -24,23 +24,48 @@ android {
     }
 
     defaultConfig {
+
         // Application ID must be a valid Java package name
         // Use the same value as your namespace unless you intentionally diverge
         applicationId = "com.example.barangay_quest_flutter"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // Firebase Auth requires minSdk 23+
+        
+        // --- THIS IS THE FIX ---
+        // Google Maps requires minSdk 20+
         minSdkVersion = flutter.minSdkVersion
+        // --- END OF FIX ---
+        
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    // --- KEYSTORE PROPERTIES MOVED HERE ---
+    // This block is now INSIDE the 'android' block, where it can be seen
+    def keystoreProperties = new Properties()
+    def keystorePropertiesFile = file('key.properties') // This looks in the current (app) folder
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    }
+    // --- END KEYSTORE PROPERTIES ---
+
+    // --- ADD SIGNING CONFIGS ---
+    signingConfigs {
+        release {
+            if (keystoreProperties.getProperty('storeFile') != null) {
+                storeFile file(keystoreProperties.getProperty('storeFile'))
+                storePassword keystoreProperties.getProperty('storePassword')
+                keyAlias keystoreProperties.getProperty('keyAlias')
+                keyPassword keystoreProperties.getProperty('keyPassword')
+            }
+        }
+    }
+    // --- END SIGNING CONFIGS ---
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            signingConfig signingConfigs.release // <-- THIS LINE IS CORRECT
         }
     }
 }

@@ -1,3 +1,4 @@
+// lib/models/quest.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Quest {
@@ -5,64 +6,58 @@ class Quest {
   final String title;
   final String category;
   final String workType;
-  final String? schedule;
-  final String budgetType;
-  final num budgetAmount;
   final String description;
-  final String? imageUrl;
   final String questGiverId;
   final String questGiverName;
-  final String status; // open, in-progress, completed
+  final String status;
   final Timestamp? createdAt;
-  final Map<String, dynamic>? location; // {lat, lng, address}
+  final num price;
+  final String priceType;
+  final String? imageUrl;
+  final Map<String, dynamic>? location;
+
+  // --- RATING FIELDS REMOVED ---
 
   Quest({
     required this.id,
     required this.title,
     required this.category,
     required this.workType,
-    required this.schedule,
-    required this.budgetType,
-    required this.budgetAmount,
     required this.description,
-    required this.imageUrl,
     required this.questGiverId,
     required this.questGiverName,
     required this.status,
-    required this.createdAt,
-    required this.location,
+    this.createdAt,
+    required this.price,
+    required this.priceType,
+    this.imageUrl,
+    this.location,
+    
+    // --- RATING FIELDS REMOVED ---
   });
 
   factory Quest.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final d = doc.data() ?? {};
-    num parseNum(dynamic v) {
-      if (v is num) {
-        return v;
-      }
-      if (v is String) {
-        final n = num.tryParse(v.trim());
-        if (n != null) {
-          return n;
-        }
-      }
-      return 0;
+    final data = doc.data();
+    if (data == null) {
+      throw Exception("Quest data is null for doc ${doc.id}");
     }
 
     return Quest(
       id: doc.id,
-      title: d['title'] ?? '',
-      category: d['category'] ?? '',
-      workType: d['workType'] ?? 'In Person',
-      schedule: d['schedule'],
-      budgetType: d['budgetType'] ?? 'Fixed Rate',
-  budgetAmount: parseNum(d['budgetAmount']),
-      description: d['description'] ?? '',
-      imageUrl: d['imageUrl'],
-      questGiverId: d['questGiverId'] ?? '',
-      questGiverName: d['questGiverName'] ?? 'User',
-      status: d['status'] ?? 'open',
-      createdAt: d['createdAt'],
-      location: (d['location'] as Map?)?.cast<String, dynamic>(),
+      title: data['title'] ?? 'No Title',
+      category: data['category'] ?? 'Other',
+      workType: data['workType'] ?? 'In Person',
+      description: data['description'] ?? '',
+      questGiverId: data['questGiverId'] ?? '',
+      questGiverName: data['questGiverName'] ?? 'Unknown',
+      status: data['status'] ?? 'open',
+      createdAt: data['createdAt'] as Timestamp?,
+      price: data['price'] ?? 0,
+      priceType: data['priceType'] ?? 'Fixed Rate',
+      imageUrl: data['imageUrl'],
+      location: data['location'] as Map<String, dynamic>?,
+
+      // --- RATING FIELDS REMOVED ---
     );
   }
 }

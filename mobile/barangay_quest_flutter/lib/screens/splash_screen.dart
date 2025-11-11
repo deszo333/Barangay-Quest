@@ -1,3 +1,5 @@
+// lib/screens/splash_screen.dart
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -15,10 +17,11 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Hold for 3 seconds then go to the app entry ('/').
+    // Hold for 3 seconds then go to the app entry ('/home').
     _timer = Timer(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      context.go('/');
+    if (!mounted) return;
+    // --- FIX: Use go() to replace stack ---
+    context.go('/home');
     });
   }
 
@@ -41,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen> {
             end: Alignment.bottomRight,
             colors: [
               theme.colorScheme.surface,
-              theme.colorScheme.surfaceContainerHighest.withOpacity(0.6),
+              theme.colorScheme.surfaceContainerHighest.withAlpha((255 * 0.6).round()),
             ],
           ),
         ),
@@ -49,7 +52,6 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Placeholder for app icon/logo — replace with Image.asset when you add a branded asset.
               Container(
                 width: 96,
                 height: 96,

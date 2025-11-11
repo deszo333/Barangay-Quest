@@ -66,7 +66,7 @@ export default function PostJob() {
     title: '',
     category: CATEGORIES[0], 
     workType: 'In Person',
-    budgetAmount: '',
+    price: '',
     description: '',
     agreeToTerms: false,
   });
@@ -92,13 +92,13 @@ export default function PostJob() {
       setError("Please pin the job location on the map."); return; 
     }
 
-    // Budget Validation
-    const budgetAmount = Number(formData.budgetAmount);
-    if (!budgetAmount || budgetAmount <= 0) {
-      setError("Please enter a valid budget amount (must be greater than 0).");
+    // Price Validation
+    const priceAmount = Number(formData.price);
+    if (!priceAmount || priceAmount <= 0) {
+      setError("Please enter a valid price (must be greater than 0).");
       return;
     }
-    if ((user.walletBalance || 0) < budgetAmount) {
+    if ((user.walletBalance || 0) < priceAmount) {
       setError("Your wallet balance is too low to post this job. Please add credits to your Profile page.");
       return;
     }
@@ -151,25 +151,28 @@ export default function PostJob() {
 
         // Create the new quest
         const newQuestRef = doc(collection(db, "quests"));
-        transaction.set(newQuestRef, {
-            ...formData,
-            // --- SIMPLIFIED: Hard-code these values ---
-            engagement: "One-Time",
-            budgetType: "Fixed Rate",
-            schedule: "Specific Date",
-            specificDate: specificDate, // Save the chosen date
-            // ---
-            location: {
-                lat: marker ? marker.lat : null,
-                lng: marker ? marker.lng : null,
-                address: locationAddress || (formData.workType === 'Online' ? 'Online' : 'Location Not Pinned')
-             },
-            imageUrl: imageUrl,
-            questGiverId: user.uid,
-            questGiverName: user.name,
-            status: 'open',
-            createdAt: serverTimestamp()
-        });
+    transaction.set(newQuestRef, {
+      title: formData.title,
+      category: formData.category,
+      workType: formData.workType,
+      description: formData.description,
+      agreeToTerms: formData.agreeToTerms,
+      price: Number(formData.price),
+      engagement: "One-Time",
+      priceType: "Fixed Rate",
+      schedule: "Specific Date",
+      specificDate: specificDate, // Save the chosen date
+      location: {
+        lat: marker ? marker.lat : null,
+        lng: marker ? marker.lng : null,
+        address: locationAddress || (formData.workType === 'Online' ? 'Online' : 'Location Not Pinned')
+       },
+      imageUrl: imageUrl,
+      questGiverId: user.uid,
+      questGiverName: user.name,
+      status: 'open',
+      createdAt: serverTimestamp()
+    });
       }); // End Transaction
 
       setLoading(false);
@@ -254,13 +257,13 @@ export default function PostJob() {
 
               {/* --- UPDATED: Budget is now a single field --- */}
               <div className="form-group">
-                <label className="required" htmlFor="budgetAmount">Budget (Fixed Rate)</label>
+                <label className="required" htmlFor="price">Price (Fixed Rate)</label>
                 <input
                   type="number"
-                  name="budgetAmount"
-                  id="budgetAmount"
+                  name="price"
+                  id="price"
                   className="form-input"
-                  value={formData.budgetAmount}
+                  value={formData.price}
                   onChange={handleChange}
                   placeholder="₱0.00"
                   required
@@ -293,7 +296,6 @@ export default function PostJob() {
               {/* Action Buttons */}
               <div className="form-actions">
                 <button type="submit" className="btn btn-primary"> Next: Review </button>
-                <button type="button" className="btn btn-outline btn-save">Save Draft</button>
               </div>
             </form>
           )}
@@ -383,7 +385,7 @@ function ReviewPanel({ formData, locationAddress, imageFile, specificDate, onBac
         <dl className="review-item"> <dt>Date</dt> <dd>{formattedDate()}</dd> </dl>
       </div>
       {/* Budget */}
-      <div className="review-section"> <h3>Budget</h3> <dl className="review-item"> <dt>Details</dt> <dd>{formatBudget(null, formData.budgetAmount)}</dd> </dl> </div>
+  <div className="review-section"> <h3>Budget</h3> <dl className="review-item"> <dt>Details</dt> <dd>{formatBudget(null, formData.price)}</dd> </dl> </div>
       {/* Image Preview */}
       {imageFile && ( <div className="review-section"> <h3>Image</h3> <dl className="review-item" style={{display: 'block'}}> <dt>Preview</dt> <dd style={{marginTop: '0.5rem'}}> <img src={URL.createObjectURL(imageFile)} alt="Job preview" style={{width: '100%', maxWidth: '300px', borderRadius: '10px'}} /> </dd> </dl> </div> )}
       {/* Description */}

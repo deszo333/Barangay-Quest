@@ -1,110 +1,114 @@
+// lib/screens/home_screen.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../models/quest.dart';
-import '../widgets/quest_card.dart';
-import '../widgets/nav_actions.dart';
+import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart'; // <-- Import permission_handler
 
-class HomeScreen extends StatelessWidget {
+import '../main.dart' show AuthService, UserModel; 
+import '../theme/app_theme.dart';
+import '../models/quest.dart'; 
+
+// --- IMPORT THE DASHBOARD WIDGETS ---
+import '../widgets/dashboard/category_chips.dart';
+import '../widgets/dashboard/top_user_list.dart';
+import '../widgets/dashboard/home_map.dart'; 
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+    // --- ADDED: Request permission when the home screen loads ---
+    _requestLocationPermission();
+  }
+
+  // --- NEW: Function to request location permission ---
+  Future<void> _requestLocationPermission() async {
+    final status = await Permission.location.request();
+    if (status.isDenied) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location permission is needed to show nearby quests.')),
+        );
+      }
+    } else if (status.isPermanentlyDenied) {
+      // User permanently denied. Open app settings.
+      openAppSettings();
+    }
+    // If status.isGranted, the map's "myLocationEnabled" will now work.
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    final authService = context.watch<AuthService>();
+    final user = authService.firestoreUser;
+  // final bool canPost = authService.status == 'approved'; // Unused variable removed
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Barangay Quest'),
-        actions: const [NavActions()],
+        title: Text(
+          'Hello, ${user?.name.split(' ')[0] ?? 'User'}!',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none_outlined),
+            onPressed: () {
+              // TODO: Open notifications
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      
+      body: ListView(
         children: [
-          // Hero header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF0B1620), Color(0xFF0F1C28)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Find and post quests',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        user == null
-                            ? 'Browse titles. Sign in to see full details.'
-                            : 'Discover open jobs or post your own quest.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: const Color(0xFF9DB2C2)),
-                      ),
-                    ],
-                  ),
+          const SizedBox(height: 16),
+          
+          // --- Search Bar ---
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: const Icon(Icons.mic_none),
+                fillColor: AppTheme.bg2,
+                filled: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
                 ),
-                const SizedBox(width: 8),
-                if (user == null)
-                  FilledButton(
-                    onPressed: () => context.go('/signup'),
-                    child: const Text('Sign Up'),
-                  )
-                else
-                  OutlinedButton(
-                    onPressed: () => context.go('/post-job'),
-                    child: const Text('Post Job'),
-                  ),
-              ],
+              ),
+              onTap: () => context.push('/find-jobs'),
+              readOnly: true,
             ),
           ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: FirebaseFirestore.instance
-                  .collection('quests')
-                  // Only fetch open quests server-side to reduce data and keep lists clean
-                  .where('status', isEqualTo: 'open')
-                  .orderBy('createdAt', descending: true)
-                  .limit(20)
-                  .snapshots(),
-              builder: (context, snap) {
-                if (snap.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snap.hasError) {
-                  return Center(
-                      child: Text('Failed to load quests: ${snap.error}'));
-                }
-                var quests =
-                    snap.data?.docs.map((d) => Quest.fromDoc(d)).toList() ?? [];
-                if (quests.isEmpty) {
-                  return const Center(child: Text('No quests yet.'));
-                }
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  itemCount: quests.length,
-                  separatorBuilder: (c, i) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final q = quests[index];
-                    return QuestCard(
-                        quest: q, onTap: () => context.go('/quest/${q.id}'));
-                  },
-                );
-              },
-            ),
-          ),
+          const SizedBox(height: 24),
+          
+          // --- Category Chips ---
+          const CategoryChips(),
+          
+          const SizedBox(height: 24),
+          
+          // --- HomeMap ---
+          const HomeMap(),
+
+          const SizedBox(height: 24),
+          
+          // --- Top Questers (remains at the bottom) ---
+          const TopUserList(),
+
+          const SizedBox(height: 24),
         ],
       ),
     );

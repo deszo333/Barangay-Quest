@@ -100,7 +100,7 @@ export default function AdminDashboard() {
 
                   {/* --- Email --- */}
                   <li>
-                    <strong style={{minWidth: '100px'}}>Email:</strong>
+                    <strong style={{minWidth: '100px'}}>Email: </strong>
                     <span>{user.email || 'No email provided'}</span>
                   </li>
 

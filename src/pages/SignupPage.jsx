@@ -165,81 +165,84 @@ export default function SignupPage() {
             value={formData.phone}
             onChange={handleChange}
             required
-            // --- Add these lines ---
             pattern="^09\d{9}$"
             maxLength="11"
             title="Phone number must be 11 digits starting with 09 (e.g., 09171234567)"
-            // --- End of added lines ---
           />
         </div>
 
-        {/* --- Password Fields (Grid) --- */}
-        <div className="form-grid-2">
-          <div className="auth-field">
-            <label htmlFor="password">Password</label>
-            <input
-              type={showPassword ? "text" : "password"}
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handlePasswordChange}
-              minLength="6"
-              required
-            />
+        {/* === START OF PASSWORD GROUP === */}
+        <div className="password-group">
+          {/* --- Password Fields (Grid) --- */}
+          <div className="form-grid-2">
+            <div className="auth-field">
+              <label htmlFor="password">Password</label>
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handlePasswordChange}
+                minLength="6"
+                required
+              />
+            </div>
+            <div className="auth-field">
+              <label htmlFor="confirmPassword">Confirm Password</label>
+              <input
+                type={showPassword ? "text" : "password"}
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
-          <div className="auth-field">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              type={showPassword ? "text" : "password"}
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
+
+          {/* --- Password Strength Indicator --- */}
+          <div className="password-strength-bar">
+            <div
+              className="password-strength-fill"
+              style={{
+                width: passwordStrength.label === "Weak" ? "33%" : passwordStrength.label === "Medium" ? "66%" : "100%",
+                backgroundColor: passwordStrength.color,
+              }}
+            ></div>
+          </div>
+          <span className="password-strength-label" style={{ color: passwordStrength.color }}>
+            {passwordStrength.label}
+          </span>
+          
+          {/* --- "Show Password" Toggle --- */}
+          <div className="auth-options password-toggle">
+            <label>
+              <input
+                type="checkbox"
+                id="showPassword"
+                checked={showPassword}
+                onChange={() => setShowPassword(!showPassword)}
+              />
+              Show Password
+            </label>
+          </div>
+
+          {/* --- "Receive Calls" Toggle --- */}
+          <div className="auth-options call-toggle">
+            <label>
+              <input
+                type="checkbox"
+                name="canReceiveCalls"
+                id="canReceiveCalls"
+                checked={canReceiveCalls}
+                onChange={(e) => setCanReceiveCalls(e.target.checked)}
+                required
+              />
+              I am willing to receive calls for verification.
+            </label>
           </div>
         </div>
-
-        {/* --- Password Strength Indicator --- */}
-        <div className="password-strength-bar">
-          <div
-            className="password-strength-fill"
-            style={{
-              width: passwordStrength.label === "Weak" ? "33%" : passwordStrength.label === "Medium" ? "66%" : "100%",
-              backgroundColor: passwordStrength.color,
-            }}
-          ></div>
-        </div>
-        <span className="password-strength-label" style={{ color: passwordStrength.color }}>
-          {passwordStrength.label}
-        </span>
-        
-        {/* --- Toggles --- */}
-        <div className="auth-options" style={{ justifyContent: "flex-start", marginTop: "1rem" }}>
-          <label>
-            <input
-              type="checkbox"
-              id="showPassword"
-              checked={showPassword}
-              onChange={() => setShowPassword(!showPassword)}
-            />
-            Show Password
-          </label>
-        </div>
-
-        <div className="auth-options" style={{ justifyContent: "flex-start", gap: "10px", marginTop: "1rem" }}>
-          <label>
-            <input
-              type="checkbox"
-              name="canReceiveCalls"
-              id="canReceiveCalls"
-              checked={canReceiveCalls}
-              onChange={(e) => setCanReceiveCalls(e.target.checked)}
-              required
-            />
-            I am willing to receive calls for verification.
-          </label>
-        </div>
+        {/* === END OF PASSWORD GROUP === */}
 
         {/* Error Message */}
         {error && (

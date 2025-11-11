@@ -1,97 +1,187 @@
+// lib/widgets/quest_card.dart
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/quest.dart';
 import '../theme/app_theme.dart';
+import 'package:intl/intl.dart'; // Import for number formatting
 
-class QuestCard extends StatelessWidget {
+// --- Helper Functions (moved from inside build) ---
+
+String _formatBudget(Quest quest) {
+  final format =
+      NumberFormat.currency(locale: 'en_PH', symbol: '₱', decimalDigits: 2);
+  final amount = quest.price;
+  if (quest.priceType == 'Hourly Rate') {
+    return '${format.format(amount)} / hr';
+  }
+  return '${format.format(amount)} (${quest.priceType})';
+}
+
+String _formatWhen(Quest quest) {
+  final ts = quest.createdAt;
+  if (ts == null) {
+    return 'Just now';
+  }
+  final dt = ts.toDate();
+  final duration = DateTime.now().difference(dt);
+
+  if (duration.inSeconds < 60) {
+    return 'Just now';
+  }
+  if (duration.inMinutes < 60) {
+    return '${duration.inMinutes}m ago';
+  }
+  if (duration.inHours < 24) {
+    return '${duration.inHours}h ago';
+  }
+  final days = duration.inDays;
+  return '$days day${days == 1 ? '' : 's'} ago';
+}
+
+Widget _statusPill(BuildContext context, Quest quest) {
+  final status = quest.status.toLowerCase().replaceAll('_', '-');
+  Color bg;
+  Color fg;
+  switch (status) {
+    case 'open':
+      bg = const Color(0x1A38BDF8);
+      fg = const Color(0xFF38BDF8);
+      break;
+    case 'in-progress':
+      bg = const Color(0x1AFACC15);
+      fg = const Color(0xFFFACC15);
+      break;
+    case 'completed':
+      bg = const Color(0x1A4ADE80);
+      fg = const Color(0xFF4ADE80);
+      break;
+    case 'paused':
+      bg = const Color(0x1A64748B);
+      fg = const Color(0xFF64748B);
+      break;
+    case 'rejected':
+      bg = const Color(0x1AF87171);
+      fg = const Color(0xFFF87171);
+      break;
+    default:
+      bg = const Color(0xFF1F2A36);
+      fg = const Color(0xFFBFE7FF);
+  }
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    decoration: BoxDecoration(
+      color: bg,
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: fg.withAlpha((0.2 * 255).round())),
+    ),
+    child: Text(
+      status,
+      style: Theme.of(context)
+          .textTheme
+          .bodySmall
+          ?.copyWith(color: fg, fontWeight: FontWeight.w600),
+    ),
+  );
+}
+
+// --- Card is now a StatefulWidget ---
+class QuestCard extends StatefulWidget {
   final Quest quest;
   final VoidCallback? onTap;
 
   const QuestCard({super.key, required this.quest, this.onTap});
 
-  String _formatBudget() {
-    final amount = quest.budgetAmount.toString();
-    if (quest.budgetType == 'Hourly Rate') {
-      return '₱$amount / hr';
-    }
-    return '₱$amount (Fixed)';
+  @override
+  State<QuestCard> createState() => _QuestCardState();
+}
+
+class _QuestCardState extends State<QuestCard> {
+  String _avgRating = 'N/A';
+  int _reviewCount = 0;
+  bool _isLoadingRating = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch the rating data when the card is first created
+    _fetchGiverData();
   }
 
-  String _formatWhen() {
-    final ts = quest.createdAt;
-    if (ts == null) {
-      return 'Just now';
+  // --- THIS IS THE LOGIC YOU REQUESTED ---
+  Future<void> _fetchGiverData() async {
+    // Don't try to fetch if the ID is missing
+    if (widget.quest.questGiverId.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _isLoadingRating = false;
+        });
+      }
+      return;
     }
-    final dt = ts.toDate();
-    final seconds = DateTime.now().difference(dt).inSeconds;
-    if (seconds < 60) {
-      return 'Just now';
-    }
-    final minutes = seconds ~/ 60;
-    if (minutes < 60) {
-      return '$minutes min ago';
-    }
-    final hours = minutes ~/ 60;
-    if (hours < 24) {
-      return '$hours hr ago';
-    }
-    final days = hours ~/ 24;
-    return '$days day${days == 1 ? '' : 's'} ago';
-  }
 
-  Widget _statusPill(BuildContext context) {
-    final status = quest.status.toLowerCase();
-    Color bg;
-    Color fg;
-    switch (status) {
-      case 'open':
-        bg = const Color(0xFF0F2A1E);
-        fg = const Color(0xFF99E2B4);
-        break;
-      case 'in_progress':
-      case 'in-progress':
-        bg = const Color(0xFF1D2433);
-        fg = const Color(0xFF9DB2FF);
-        break;
-      case 'completed':
-        bg = const Color(0xFF2A2A2A);
-        fg = const Color(0xFFBDBDBD);
-        break;
-      case 'cancelled':
-      case 'rejected':
-        bg = const Color(0xFF2A1417);
-        fg = const Color(0xFFFFA3A3);
-        break;
-      default:
-        bg = const Color(0xFF1F2A36);
-        fg = const Color(0xFFBFE7FF);
+    try {
+      // 1. Get the quester ID from the quest
+      final giverId = widget.quest.questGiverId;
+
+      // 2. Find its user document
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(giverId)
+          .get();
+
+      if (userDoc.exists && userDoc.data() != null) {
+        final data = userDoc.data()!;
+
+        // 3. Get its star rating
+        final num totalScore = data['totalRatingScore'] ?? 0;
+        final int numRatings = data['numberOfRatings'] ?? 0;
+
+        if (mounted) {
+          // Check if the widget is still in the tree
+          setState(() {
+            _reviewCount = numRatings;
+            if (numRatings > 0) {
+              _avgRating = (totalScore / numRatings).toStringAsFixed(1);
+            } else {
+              _avgRating = 'New';
+            }
+            _isLoadingRating = false;
+          });
+        }
+      } else {
+        // User document not found
+        if (mounted) {
+          setState(() {
+            _isLoadingRating = false;
+            _avgRating = 'N/A';
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching giver rating: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingRating = false;
+          _avgRating = 'N/A';
+        });
+      }
     }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-  border: Border.all(color: bg.withAlpha((0.6 * 255).round())),
-      ),
-      child: Text(
-        status.replaceAll('_', '-'),
-        style: Theme.of(context)
-            .textTheme
-            .bodySmall
-            ?.copyWith(color: fg, fontWeight: FontWeight.w600),
-      ),
-    );
   }
+  // --- END OF REQUESTED LOGIC ---
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final quest = widget.quest; // Use 'widget.quest' to access the quest
+
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snap) {
         final user = snap.data;
         if (user == null) {
-          // Guest view: only show the title; hide meta, image, price and actions.
+          // Guest view
           return Card(
             clipBehavior: Clip.antiAlias,
             child: Padding(
@@ -113,17 +203,22 @@ class QuestCard extends StatelessWidget {
                     'Sign in to see details',
                     style: textTheme.bodySmall?.copyWith(color: AppTheme.muted),
                   ),
-                  // Intentionally no button here to avoid redundant CTAs.
                 ],
               ),
             ),
           );
         }
 
+        // --- Logged-in view ---
+        
+        // Use the state variables for rating
+        final ratingText = _isLoadingRating ? '...' : _avgRating;
+        final reviewCountText = _isLoadingRating ? '' : '($_reviewCount)';
+
         return Card(
           clipBehavior: Clip.antiAlias,
           child: InkWell(
-            onTap: onTap,
+            onTap: widget.onTap,
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
@@ -148,25 +243,28 @@ class QuestCard extends StatelessWidget {
                             const SizedBox(height: 6),
                             Row(
                               children: [
-                                _statusPill(context),
+                                _statusPill(context, quest),
                                 const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF0E2230),
-                                    borderRadius: BorderRadius.circular(999),
-                                    border: Border.all(
-                                        color: const Color(0xFF274A60)),
-                                  ),
-                                  child: Text(
-                                    quest.workType == 'Online'
-                                        ? 'Online'
-                                        : (quest.location?['address'] ??
-                                            'In Person'),
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: const Color(0xFFBFE7FF),
-                                      fontWeight: FontWeight.w600,
+                                Flexible(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0E2230),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                          color: const Color(0xFF274A60)),
+                                    ),
+                                    child: Text(
+                                      quest.workType == 'Online'
+                                          ? 'Online'
+                                          : (quest.location?['address'] ??
+                                              'In Person'),
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: const Color(0xFFBFE7FF),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ),
@@ -175,6 +273,7 @@ class QuestCard extends StatelessWidget {
                           ],
                         ),
                       ),
+                      const SizedBox(width: 8),
                       if (quest.imageUrl != null)
                         ClipRRect(
                           borderRadius: BorderRadius.circular(10),
@@ -203,13 +302,13 @@ class QuestCard extends StatelessWidget {
                         const Icon(Icons.star_rounded,
                             color: Color(0xFFFFD166), size: 16),
                         const SizedBox(width: 4),
-                        const Text('N/A'),
+                        Text(ratingText), // <-- USE THE STATE VARIABLE
                         const SizedBox(width: 2),
-                        const Text('(0)'),
+                        Text(reviewCountText), // <-- USE THE STATE VARIABLE
                         const SizedBox(width: 8),
                         const Text('•'),
                         const SizedBox(width: 8),
-                        Text(_formatWhen()),
+                        Text(_formatWhen(quest)),
                         const SizedBox(width: 8),
                         const Text('•'),
                         const SizedBox(width: 8),
@@ -225,16 +324,19 @@ class QuestCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Text(
-                        _formatBudget(),
-                        style: textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.white,
+                      Flexible(
+                        child: Text(
+                          _formatBudget(quest),
+                          style: textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       OutlinedButton.icon(
-                        onPressed: onTap,
+                        onPressed: widget.onTap,
                         icon: const Icon(Icons.visibility),
                         label: const Text('View'),
                       ),

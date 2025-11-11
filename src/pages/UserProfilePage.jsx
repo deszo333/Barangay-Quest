@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { db } from '../firebase';
-import { doc, getDoc, collection, query, where, orderBy, getDocs, documentId } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, getDocs, documentId, limit } from 'firebase/firestore';
 import "./MyApplications.css"; // Reuse sidebar styles
 import "./MyQuests.css"; // Reuse quest list styles
 
@@ -17,27 +17,54 @@ function formatDate(timestamp) {
   if (interval > 1) return Math.floor(interval) + "m ago";
   return "Just now";
 }
-// Helper for price formatting
-function formatPrice(type, amount) {
-  const num = Number(amount).toFixed(2);
-  if (type === 'Hourly Rate') { return `₱${num} / hr`; }
-  return `₱${num} Fixed`;
+
+// --- ADD THIS COMPONENT ---
+function StarRating({ rating }) {
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    stars.push(
+      <span key={i} style={{ color: i <= rating ? '#ffd166' : 'var(--muted)', fontSize: '1.2rem' }}>
+        ★
+      </span>
+    );
+  }
+  return <div>{stars}</div>;
+}
+
+// --- ADD THIS COMPONENT ---
+function ReviewCard({ review }) {
+  return (
+    <div className="posted-quest-item" style={{display: 'block', marginBottom: '1rem'}}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <StarRating rating={review.rating} />
+        <span style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>{formatDate(review.timestamp)}</span>
+      </div>
+      {review.reviewText && (
+        <p style={{ color: 'var(--white)', fontStyle: 'italic', margin: '0 0 0.75rem' }}>
+          "{review.reviewText}"
+        </p>
+      )}
+      <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--muted)' }}>
+        For Quest: <Link to={`/quest/${review.questId}`} style={{ color: 'var(--accent)', textDecoration: 'underline' }}>{review.questTitle}</Link>
+      </p>
+    </div>
+  );
 }
 
 
 export default function UserProfilePage() {
   const { userId } = useParams(); // Get user ID from URL
   const [profileUser, setProfileUser] = useState(null);
-  const [postedQuests, setPostedQuests] = useState([]);
-  const [completedQuests, setCompletedQuests] = useState([]); // Quests completed as applicant
+  const [reviewsAsQuester, setReviewsAsQuester] = useState([]); // <-- NEW
+  const [reviewsAsGiver, setReviewsAsGiver] = useState([]);     // <-- NEW
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Effect to fetch user profile and their associated quests
+  // Effect to fetch user profile and their reviews
   useEffect(() => {
-    const fetchUserProfileAndQuests = async () => {
-      if (!userId) return; // Exit if no userId is provided in the URL
-      setLoading(true); setError(null); setPostedQuests([]); setCompletedQuests([]); // Reset states
+    const fetchUserProfileAndReviews = async () => {
+      if (!userId) return;
+      setLoading(true); setError(null); setReviewsAsGiver([]); setReviewsAsQuester([]);
 
       try {
         // --- 1. Fetch User Profile Document ---
@@ -47,61 +74,66 @@ export default function UserProfilePage() {
         if (userDocSnap.exists()) {
           setProfileUser({ id: userDocSnap.id, ...userDocSnap.data() }); // Store user data
 
-          // --- 2. Fetch Quests Posted BY this user ---
-          const postedQuery = query(
-            collection(db, "quests"),
-            where("questGiverId", "==", userId), // Filter by giver ID
-            orderBy("createdAt", "desc") // Order by creation date
-            // limit(5) // Optionally limit the number shown
-          );
-          const postedSnapshot = await getDocs(postedQuery);
-          const postedData = postedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setPostedQuests(postedData);
-
-          // --- 3. Fetch Quests Completed BY this user (as applicant) ---
-          // First, find application documents where this user was the applicant and status is completed
-          const completedAppsQuery = query(
+          // --- 2. Fetch Reviews as Quester (Givers rated them) ---
+          const asQuesterQuery = query(
             collection(db, "applications"),
             where("applicantId", "==", userId),
-            where("status", "==", "completed")
-            // orderBy("completedAt", "desc") // Requires completedAt field and maybe an index
+            where("giverRated", "==", true),
+            orderBy("approvedAt", "desc"),
+            limit(10)
           );
-          const completedAppsSnapshot = await getDocs(completedAppsQuery);
-          // Extract the quest IDs from these applications
-          const completedQuestIds = completedAppsSnapshot.docs.map(doc => doc.data().questId);
+          const asQuesterSnapshot = await getDocs(asQuesterQuery);
+          const questerReviews = asQuesterSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              rating: data.giverRating,
+              reviewText: data.review,
+              questTitle: data.questTitle,
+              questId: data.questId,
+              timestamp: data.approvedAt
+            };
+          });
+          setReviewsAsQuester(questerReviews);
 
-          // If there are completed quest IDs, fetch the details of those quests
-          // Note: Firestore 'in' query is limited to 10 IDs per query. For more, use multiple queries or adjust logic.
-          if (completedQuestIds.length > 0) {
-              const completedQuestsQuery = query(
-                  collection(db, "quests"),
-                  // Use documentId() to query based on document IDs
-                  where(documentId(), "in", completedQuestIds.slice(0, 10)) // Fetch max 10 completed quest details
-              );
-              const completedQuestsSnapshot = await getDocs(completedQuestsQuery);
-              const completedData = completedQuestsSnapshot.docs.map(doc => ({id: doc.id, ...doc.data() }));
-              setCompletedQuests(completedData);
-          } else {
-              setCompletedQuests([]); // Set empty array if no completed quests found
-          }
-
+          // --- 3. Fetch Reviews as Giver (Questers rated them) ---
+          const asGiverQuery = query(
+            collection(db, "applications"),
+            where("questGiverId", "==", userId),
+            where("questerRated", "==", true),
+            orderBy("appliedAt", "desc"),
+            limit(10)
+          );
+          const asGiverSnapshot = await getDocs(asGiverQuery);
+          const giverReviews = asGiverSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              rating: data.questerRating,
+              reviewText: data.questerReview,
+              questTitle: data.questTitle,
+              questId: data.questId,
+              timestamp: data.appliedAt
+            };
+          });
+          setReviewsAsGiver(giverReviews);
         } else {
           setError("User profile not found."); // Set error if user document doesn't exist
         }
       } catch (err) {
-        console.error("Error fetching user profile/quests:", err);
+        console.error("Error fetching user profile/reviews:", err);
          if (err.code === 'failed-precondition') { // Specific check for missing index error
              console.error("Firestore index missing for profile page:", err);
              console.log("Create required index via the link in the Firestore console.");
              setError("Database setup needed. Please check Firebase console.");
         } else {
-            setError("Could not load user profile or quests."); // Generic error
+            setError("Could not load user profile or reviews."); // Generic error
         }
       } finally {
         setLoading(false); // Ensure loading is set to false after fetch attempt
       }
     };
-    fetchUserProfileAndQuests(); // Call the fetch function
+    fetchUserProfileAndReviews(); // Call the fetch function
   }, [userId]); // Rerun effect if the userId from the URL changes
 
   // Display loading state
@@ -138,46 +170,37 @@ export default function UserProfilePage() {
           <h2>{profileUser.name}</h2>
           <p>{profileUser.email}</p>
           <div className="profile-stats">
-             {/* Display Average Rating */}
-             <div className="stat-item" style={{ gridColumn: 'span 2', textAlign: 'center' }}>
+            {/* Display Average Rating */}
+            <div className="stat-item" style={{ gridColumn: 'span 2', textAlign: 'center' }}>
               <span className="stat-value">⭐ {avgRating}</span>
               <span className="stat-label">({profileUser.numberOfRatings || 0} Ratings)</span>
             </div>
-             {/* Display Quests Posted Count */}
-             <div className="stat-item">
-              <span className="stat-value">{postedQuests.length}</span>
+            {/* --- FIX: Read stats from profileUser --- */}
+            <div className="stat-item">
+              <span className="stat-value">{profileUser.questsPosted || 0}</span>
               <span className="stat-label">Quests Posted</span>
             </div>
-             {/* Display Quests Completed Count */}
-             <div className="stat-item">
-              <span className="stat-value">{completedQuests.length}</span>
+            <div className="stat-item">
+              <span className="stat-value">{profileUser.questsCompleted || 0}</span>
               <span className="stat-label">Quests Done</span>
             </div>
+            {/* --- END FIX --- */}
           </div>
         </aside>
 
         {/* Right Panel showing quest lists */}
         <main className="applications-panel"> {/* Reusing class name */}
-          <h1>{profileUser.name}'s Profile</h1>
+          <h1>{profileUser.name}'s Reviews</h1>
 
-          {/* --- Section for Quests Posted --- */}
+          {/* --- Section for Reviews as Quester --- */}
           <section style={{marginBottom: '2rem'}}>
-            <h2>Quests Posted ({postedQuests.length})</h2>
-            {postedQuests.length === 0 ? (
-                <p>This user hasn't posted any quests yet.</p>
+            <h2>Reviews as Quester ({reviewsAsQuester.length})</h2>
+            {reviewsAsQuester.length === 0 ? (
+                <p>This user hasn't received any reviews as a quester yet.</p>
             ) : (
-                <div className="quests-list"> {/* Reuse quests-list style */}
-                    {postedQuests.map(quest => (
-                        // Render each posted quest as a clickable link/card
-                        <Link to={`/quest/${quest.id}`} key={quest.id} className="posted-quest-item" style={{display: 'block', textDecoration: 'none'}}>
-                           <h3>{quest.title}</h3>
-                           <p>{quest.location?.address || quest.workType} • {formatDate(quest.createdAt)}</p>
-                           <p style={{marginTop: '0.5rem'}}>
-                               <span style={{fontWeight: 600, color: 'var(--white)'}}>{formatPrice(quest.budgetType, quest.budgetAmount)}</span>
-                               {' • '}
-                               <span className={`app-status ${quest.status}`} style={{textTransform: 'capitalize'}}>{quest.status}</span>
-                           </p>
-                        </Link>
+                <div className="reviews-list">
+                    {reviewsAsQuester.map(review => (
+                        <ReviewCard key={review.id} review={review} />
                     ))}
                 </div>
             )}
@@ -186,28 +209,21 @@ export default function UserProfilePage() {
           {/* Separator */}
           <hr style={{borderColor: 'var(--card)', margin: '2rem 0'}}/>
 
-          {/* --- Section for Quests Completed (as Quester) --- */}
-           <section>
-            <h2>Quests Completed ({completedQuests.length})</h2>
-            {completedQuests.length === 0 ? (
-                <p>This user hasn't completed any quests yet.</p>
+          {/* --- Section for Reviews as Giver --- */}
+          <section>
+            <h2>Reviews as Giver ({reviewsAsGiver.length})</h2>
+            {reviewsAsGiver.length === 0 ? (
+                <p>This user hasn't received any reviews as a giver yet.</p>
             ) : (
-                <div className="quests-list">
-                    {completedQuests.map(quest => (
-                        // Render each completed quest as a clickable link/card
-                        <Link to={`/quest/${quest.id}`} key={quest.id} className="posted-quest-item" style={{display: 'block', textDecoration: 'none'}}>
-                           <h3>{quest.title}</h3>
-                            {/* TODO: Need completed date on application document, fetch quest giver name properly if needed */}
-                            <p>Completed on: [Date needed] • Posted by: {quest.questGiverName || 'Unknown'}</p>
-                           <p style={{marginTop: '0.5rem'}}>
-                               <span style={{fontWeight: 600, color: 'var(--white)'}}>{formatPrice(quest.budgetType, quest.budgetAmount)}</span>
-                               {/* Add link/button to view rating given/received later */}
-                           </p>
-                        </Link>
+                <div className="reviews-list">
+                    {reviewsAsGiver.map(review => (
+                        <ReviewCard key={review.id} review={review} />
                     ))}
                 </div>
             )}
           </section>
+          
+          {/* --- OLD QUESTS COMPLETED SECTION IS NOW REMOVED --- */}
 
         </main>
       </div>

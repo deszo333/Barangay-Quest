@@ -70,7 +70,7 @@ export default function FindJobs() {
 
     // 2. Filter by Price
     if (price < MAX_PRICE) {
-      quests = quests.filter(q => Number(q.budgetAmount) <= price);
+      quests = quests.filter(q => Number(q.price) <= price);
     }
     
     // 3. Filter by Rating (REMOVED)
@@ -79,9 +79,9 @@ export default function FindJobs() {
     quests.sort((a, b) => {
       switch (sortBy) {
         case 'price-asc':
-          return Number(a.budgetAmount) - Number(b.budgetAmount);
+         return Number(a.price) - Number(b.price);
         case 'price-desc':
-          return Number(b.budgetAmount) - Number(a.budgetAmount);
+         return Number(b.price) - Number(a.price);
         // case 'rating-desc': // <-- REMOVED
         //   return (b.questGiverAvgRating || 0) - (a.questGiverAvgRating || 0);
         default: // createdAt-desc
@@ -111,7 +111,7 @@ export default function FindJobs() {
   const formatPrice = (type, amount) => {
     const num = Number(amount).toFixed(2);
     if (type === 'Hourly Rate') { return `₱${num} / hour`; }
-    return `₱${num} (Fixed)`;
+    return `₱${num}`;
   }
 
   return (
@@ -183,8 +183,11 @@ export default function FindJobs() {
 
         {/* === Right Panel (Results) === */}
         <main className="results-panel">
-          <div className="results-header">
-            <h2>{showMap ? "Map View" : `Find Results (${filteredQuests.length})`}</h2>
+        <div className="results-header">
+          <h2>{showMap ? "Map View" : `Find Results (${filteredQuests.length})`}</h2>
+          
+          {/* --- ADD THIS CONDITION --- */}
+          {!showMap && (
             <select 
               className="form-select" 
               style={{width: '200px', background: 'var(--bg-2)'}}
@@ -192,11 +195,13 @@ export default function FindJobs() {
               onChange={(e) => setSortBy(e.target.value)}
             >
               <option value="createdAt-desc">Sort by: Newest</option>
-              {/* <option value="rating-desc">Sort by: Rating (High-Low)</option> */} {/* <-- REMOVED */}
               <option value="price-desc">Sort by: Price (High-Low)</option>
               <option value="price-asc">Sort by: Price (Low-High)</option>
             </select>
-          </div>
+          )}
+          {}
+
+        </div>
 
           {loading && <p>Loading quests...</p>}
 
@@ -229,7 +234,7 @@ export default function FindJobs() {
                     >
                       <div className="info-window-content">
                         <h4>{selectedQuest.title}</h4>
-                        <p>{formatPrice(selectedQuest.budgetType, selectedQuest.budgetAmount)}</p>
+                          <p>{formatPrice(selectedQuest.priceType, selectedQuest.price)}</p>
                         <Link to={`/quest/${selectedQuest.id}`}>
                           View Quest
                         </Link>
